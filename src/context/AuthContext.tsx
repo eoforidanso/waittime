@@ -22,6 +22,7 @@ export interface StaffUser {
   displayName: string;
   role: StaffRole;
   createdAt: string | number;
+  isOnline?: boolean;
 }
 
 interface AuthContextType {
@@ -33,6 +34,7 @@ interface AuthContextType {
   createStaffAccount: (email: string, password: string, displayName: string, role: StaffRole) => Promise<void>;
   updateStaffRole: (uid: string, role: StaffRole) => Promise<void>;
   deleteStaffAccount: (uid: string) => Promise<void>;
+  setOnlineStatus: (uid: string, isOnline: boolean) => Promise<void>;
   listStaffUsers: () => Promise<StaffUser[]>;
   isAdmin: boolean;
 }
@@ -77,6 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await firebaseSignOut(auth);
     setStaffProfile(null);
+  };
+
+  const setOnlineStatus = async (uid: string, isOnline: boolean) => {
+    await setDoc(doc(db, 'staff', uid), { isOnline }, { merge: true });
+    if (staffProfile) {
+      logAudit({ uid: staffProfile.uid, displayName: staffProfile.displayName }, isOnline ? 'Staff Set Online' : 'Staff Set Offline', `UID ${uid}`);
+    }
   };
 
   // Only admins call this — creates a new Firebase Auth user + Firestore doc
@@ -147,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{
       user, staffProfile, loading,
       signIn, signOut,
-      createStaffAccount, updateStaffRole, deleteStaffAccount, listStaffUsers,
+      createStaffAccount, updateStaffRole, deleteStaffAccount, setOnlineStatus, listStaffUsers,
       isAdmin,
     }}>
       {children}

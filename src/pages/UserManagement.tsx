@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Users, UserPlus, Trash2, Shield, ShieldCheck, AlertCircle, Check, Loader2 } from 'lucide-react';
+import { Users, UserPlus, Trash2, Shield, ShieldCheck, AlertCircle, Check, Loader2, WifiOff, Wifi } from 'lucide-react';
 import { useAuth, type StaffRole, type StaffUser } from '../context/AuthContext';
+
+// Roles the admin can manually toggle offline/online
+const TOGGLEABLE_ROLES: StaffRole[] = ['doctor', 'nurse', 'receptionist', 'ems'];
 
 const ROLE_LABELS: Record<StaffRole, string> = {
   admin:         'Admin',
@@ -21,7 +24,7 @@ const ROLE_COLORS: Record<StaffRole, string> = {
 const ALL_ROLES: StaffRole[] = ['admin', 'doctor', 'nurse', 'receptionist', 'ems'];
 
 export default function UserManagement() {
-  const { user, staffProfile, isAdmin, listStaffUsers, createStaffAccount, updateStaffRole, deleteStaffAccount } = useAuth();
+  const { user, staffProfile, isAdmin, listStaffUsers, createStaffAccount, updateStaffRole, deleteStaffAccount, setOnlineStatus } = useAuth();
   const [staffList, setStaffList] = useState<StaffUser[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [listError, setListError] = useState('');
@@ -39,6 +42,16 @@ export default function UserManagement() {
   // Per-row state
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  // Sort: online first, then alphabetically
+  const sortedList = [...staffList].sort((a, b) => {
+    const aOnline = a.isOnline ?? false;
+    const bOnline = b.isOnline ?? false;
+    if (aOnline !== bOnline) return aOnline ? -1 : 1;
+    return (a.displayName ?? '').localeCompare(b.displayName ?? '');
+  });
+  const onlineCount = staffList.filter(s => s.isOnline).length;
 
   const refreshList = async () => {
     try {
@@ -82,8 +95,15 @@ export default function UserManagement() {
     finally { setUpdatingId(null); }
   };
 
+  const handleToggleOnline = async (target: StaffUser) => {
+    setTogglingId(target.uid);
+    try { await setOnlineStatus(target.uid, !target.isOnline); await refreshList(); }
+    catch { /* ignore */ }
+    finally { setTogglingId(null); }
+  };
+
   const handleDelete = async (target: StaffUser) => {
-    if (!window.confirm(`Remove ${target.displayName ?? target.email} from MediQ? This cannot be undone.`)) return;
+    if (!window.confirm(`Permanently remove ${target.displayName ?? target.email} from MediQ? This cannot be undone.`)) return;
     setDeletingId(target.uid);
     try { await deleteStaffAccount(target.uid); await refreshList(); }
     catch { /* ignore */ }
@@ -97,7 +117,9 @@ export default function UserManagement() {
           <Users size={22} />
           <div>
             <h1 className="um-title">User Management</h1>
-            <p className="um-sub">{staffList.length} staff account{staffList.length !== 1 ? 's' : ''} registered</p>
+            <p className="um-sub">
+              {staffList.length} staff · <span className="um-online-count">{onlineCount} online</span>
+            </p>
           </div>
         </div>
         {isAdmin && (
@@ -166,12 +188,20 @@ export default function UserManagement() {
               </tr>
             </thead>
             <tbody>
-              {staffList.map(s => (
-                <tr key={s.uid} className={s.uid === user?.uid ? 'um-row-self' : ''}>
+              {sortedList.map(s => {
+                const isOffline = !s.isOnline;
+                const canToggle = isAdmin && s.uid !== user?.uid && TOGGLEABLE_ROLES.includes(s.role);
+                return (
+                <tr key={s.uid} className={[
+                  s.uid === user?.uid ? 'um-row-self' : '',
+                  isOffline ? 'um-row-offline' : '',
+                ].filter(Boolean).join(' ')}>
                   <td>
                     <span className="um-name">
+                      <span className={`um-status-dot ${s.isOnline ? 'online' : 'offline'}`} title={s.isOnline ? 'Online' : 'Offline'} />
                       {s.displayName ?? '—'}
                       {s.uid === user?.uid && <span className="um-you-badge">you</span>}
+                      {isOffline && <span className="um-offline-badge">Off duty</span>}
                     </span>
                   </td>
                   <td className="um-email">{s.email}</td>
@@ -197,24 +227,39 @@ export default function UserManagement() {
                   </td>
                   {isAdmin && (
                     <td>
-                      {s.uid !== user?.uid ? (
-                        <button
-                          className="um-delete-btn"
-                          disabled={deletingId === s.uid}
-                          onClick={() => handleDelete(s)}
-                          title="Remove staff account"
-                        >
-                          {deletingId === s.uid ? <Loader2 size={14} className="um-spin" /> : <Trash2 size={14} />}
-                        </button>
-                      ) : (
-                        <span className="um-protected" title="Cannot delete your own account">
-                          <ShieldCheck size={14} />
-                        </span>
-                      )}
+                      <div className="um-action-group">
+                        {canToggle && (
+                          <button
+                            className={`um-toggle-btn ${s.isOnline ? 'online' : 'offline'}`}
+                            disabled={togglingId === s.uid}
+                            onClick={() => handleToggleOnline(s)}
+                            title={s.isOnline ? 'Set off duty' : 'Set on duty'}
+                          >
+                            {togglingId === s.uid
+                              ? <Loader2 size={13} className="um-spin" />
+                              : s.isOnline ? <WifiOff size={13} /> : <Wifi size={13} />}
+                            {s.isOnline ? 'Set Off Duty' : 'Set On Duty'}
+                          </button>
+                        )}
+                        {s.uid !== user?.uid ? (
+                          <button
+                            className="um-delete-btn"
+                            disabled={deletingId === s.uid}
+                            onClick={() => handleDelete(s)}
+                            title="Permanently remove account"
+                          >
+                            {deletingId === s.uid ? <Loader2 size={14} className="um-spin" /> : <Trash2 size={14} />}
+                          </button>
+                        ) : (
+                          <span className="um-protected" title="Cannot delete your own account">
+                            <ShieldCheck size={14} />
+                          </span>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>
