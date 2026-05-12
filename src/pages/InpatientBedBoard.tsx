@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQueue } from '../context/QueueContext';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../components/ConfirmDialog';
 import type { InpatientBedStatus, TicketStatus } from '../types';
 import { INPATIENT_BED_STATUS_COLORS, INPATIENT_BED_STATUS_LABELS, TRIAGE_COLORS } from '../types';
 import {
@@ -26,6 +27,7 @@ export default function InpatientBedBoard() {
   const toast = useToast();
   const { staffProfile } = useAuth();
   const isManager = staffProfile?.role === 'admin' || staffProfile?.role === 'doctor';
+  const { confirm, Dialog: ConfirmDialogEl } = useConfirm();
 
   const [search, setSearch] = useState('');
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
@@ -146,7 +148,7 @@ export default function InpatientBedBoard() {
     setModal({ type: 'edit-unit', unitId });
   };
 
-  const handleDeleteWard = (unitId: string, e: React.MouseEvent) => {
+  const handleDeleteWard = async (unitId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const u = units.find(u => u.id === unitId);
     if (!u) return;
@@ -155,6 +157,13 @@ export default function InpatientBedBoard() {
       toast.error('Cannot delete ward', `${u.name} has ${occupied} occupied bed${occupied > 1 ? 's' : ''}. Discharge all patients first.`);
       return;
     }
+    const ok = await confirm({
+      title: 'Delete Ward',
+      message: `Remove ${u.name} (${u.abbreviation}) and all ${u.beds.length} beds? This cannot be undone.`,
+      confirmLabel: 'Delete Ward',
+      variant: 'danger',
+    });
+    if (!ok) return;
     deleteInpatientUnit(unitId);
     toast.info('Ward removed', u.name);
   };
@@ -193,8 +202,14 @@ export default function InpatientBedBoard() {
     setModal(null);
   };
 
-  const handleForceClearBed = (unitId: string, bedId: string, patientName: string) => {
-    if (!window.confirm(`Override census: mark ${patientName}'s bed as available without formal discharge?`)) return;
+  const handleForceClearBed = async (unitId: string, bedId: string, patientName: string) => {
+    const ok = await confirm({
+      title: 'Census Override',
+      message: `Mark ${patientName}'s bed as available without a formal discharge? Use only to correct census errors.`,
+      confirmLabel: 'Clear Bed',
+      variant: 'warning',
+    });
+    if (!ok) return;
     updateInpatientBedStatus(unitId, bedId, 'available');
     toast.info('Census corrected', `Bed cleared — ${patientName}`);
   };
@@ -701,6 +716,7 @@ export default function InpatientBedBoard() {
           </div>
         </div>
       )}
+      {ConfirmDialogEl}
     </div>
   );
 }
