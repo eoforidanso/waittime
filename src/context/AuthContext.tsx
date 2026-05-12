@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { initializeApp } from 'firebase/app';
 import {
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
@@ -30,6 +32,7 @@ interface AuthContextType {
   staffProfile: StaffUser | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   createStaffAccount: (email: string, password: string, displayName: string, role: StaffRole) => Promise<void>;
   updateStaffRole: (uid: string, role: StaffRole) => Promise<void>;
@@ -74,6 +77,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    const cred = await signInWithPopup(auth, provider);
+    // Auto-create Firestore profile if first Google sign-in
+    const profileRef = doc(db, 'staff', cred.user.uid);
+    const snap = await getDoc(profileRef);
+    if (!snap.exists()) {
+      const profile: StaffUser = {
+        uid: cred.user.uid,
+        email: cred.user.email ?? '',
+        displayName: cred.user.displayName ?? cred.user.email ?? 'Staff',
+        role: 'nurse', // default role — admin can change in User Management
+        createdAt: new Date().toISOString(),
+      };
+      await setDoc(profileRef, profile);
+    }
   };
 
   const signOut = async () => {
@@ -155,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, staffProfile, loading,
-      signIn, signOut,
+      signIn, signInWithGoogle, signOut,
       createStaffAccount, updateStaffRole, deleteStaffAccount, setOnlineStatus, listStaffUsers,
       isAdmin,
     }}>
