@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { useQueue } from '../context/QueueContext';
 import { useToast } from '../components/Toast';
+import { useConfirm } from '../components/ConfirmDialog';
 import { getAllRecords, deleteRecord, type DailyRecord, type SerializedTicket } from '../db/patientDB';
 import RecordsCharts from '../components/RecordsCharts';
 import {
@@ -62,6 +63,7 @@ const DarkTooltip = ({
 export default function Analytics() {
   const { state, endOfDay } = useQueue();
   const toast = useToast();
+  const { confirm, Dialog: ConfirmEl } = useConfirm();
 
   // ── Patient Records state ───────────────────────────────────────────────
   const [activeView, setActiveView] = useState<'live' | 'records'>('live');
@@ -140,6 +142,14 @@ export default function Analytics() {
   };
 
   const handleDeleteRecord = async (date: string) => {
+    const record = records.find(r => r.id === date);
+    const ok = await confirm({
+      title: 'Delete Daily Record',
+      message: `Permanently delete the archived record for ${record ? formatDate(record.date) : date}? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     await deleteRecord(date);
     await loadRecords();
     if (expandedDate === date) setExpandedDate(null);
@@ -1332,6 +1342,7 @@ export default function Analytics() {
           )}
         </>
       )}
+      {ConfirmEl}
     </div>
   );
 }

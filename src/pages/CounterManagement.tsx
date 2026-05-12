@@ -4,6 +4,7 @@ import type { ServiceType, NurseRole } from '../types';
 import { SERVICE_TYPES, SERVICE_COLORS } from '../types';
 import { Settings, Plus, ToggleLeft, ToggleRight, Bed, Stethoscope, UserMinus, X, Printer, Syringe, UserPlus, ChevronDown, MonitorPlay } from 'lucide-react';
 import { useFeatureFlags } from '../context/FeatureFlagsContext';
+import { useConfirm } from '../components/ConfirmDialog';
 
 type StaffCategory = 'nurse' | 'physician';
 
@@ -32,6 +33,7 @@ function getRoleTag(role: NurseRole): { cls: string; label: string } {
 export default function CounterManagement() {
   const { state, addCounter, toggleCounter, addNurse, removeNurse, toggleNurseDuty, reassignNurse } = useQueue();
   const { flags, toggleFlag } = useFeatureFlags();
+  const { confirm, Dialog: ConfirmEl } = useConfirm();
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
   const [newService, setNewService] = useState<ServiceType>('Acute Care');
@@ -204,6 +206,16 @@ export default function CounterManagement() {
     setShowAddNurse(false);
   };
 
+  const handleRemoveNurse = async (id: string, name: string) => {
+    const ok = await confirm({
+      title: 'Remove Staff Member',
+      message: `Remove ${name} from the roster? This cannot be undone.`,
+      confirmLabel: 'Remove',
+      variant: 'danger',
+    });
+    if (ok) removeNurse(id);
+  };
+
   const PHYSICIAN_ROLES: NurseRole[] = ['Attending Physician', 'Physician Assistant'];
   const NURSE_ROLES: NurseRole[] = ['Staff Nurse', 'Charge Nurse'];
 
@@ -339,7 +351,7 @@ export default function CounterManagement() {
                   >
                     {n.assignedArea}
                   </span>
-                  <button className="nurse-action-btn danger" onClick={() => removeNurse(n.id)} title="Remove">
+                  <button className="nurse-action-btn danger" onClick={() => handleRemoveNurse(n.id, n.name)} title="Remove">
                     <X size={14} />
                   </button>
                 </div>
@@ -414,7 +426,7 @@ export default function CounterManagement() {
                   <button className="nurse-action-btn" onClick={() => toggleNurseDuty(n.id)} title="Set off duty">
                     <UserMinus size={14} />
                   </button>
-                  <button className="nurse-action-btn danger" onClick={() => removeNurse(n.id)} title="Remove nurse">
+                  <button className="nurse-action-btn danger" onClick={() => handleRemoveNurse(n.id, n.name)} title="Remove nurse">
                     <X size={14} />
                   </button>
                 </div>
@@ -437,7 +449,7 @@ export default function CounterManagement() {
                   <button className="nurse-action-btn success" onClick={() => toggleNurseDuty(n.id)} title="Set on duty">
                     <Plus size={14} />
                   </button>
-                  <button className="nurse-action-btn danger" onClick={() => removeNurse(n.id)} title="Remove nurse">
+                  <button className="nurse-action-btn danger" onClick={() => handleRemoveNurse(n.id, n.name)} title="Remove nurse">
                     <X size={14} />
                   </button>
                 </div>
@@ -543,6 +555,7 @@ export default function CounterManagement() {
           );
         })}
       </div>
+      {ConfirmEl}
     </div>
   );
 }

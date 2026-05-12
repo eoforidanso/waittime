@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useQueue } from '../context/QueueContext';
 import { useToast } from '../components/Toast';
+import { useConfirm } from '../components/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
 import { SERVICE_TYPES, SERVICE_COLORS } from '../types';
 import type { ServiceType, EscalationSeverity } from '../types';
@@ -29,6 +30,7 @@ function getAreaColor(area: string): string {
 export default function EscalationLog() {
   const { state, addEscalation, resolveEscalation, removeEscalation } = useQueue();
   const toast = useToast();
+  const { confirm, Dialog: ConfirmEl } = useConfirm();
   const { staffProfile } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
@@ -142,7 +144,15 @@ export default function EscalationLog() {
                       <CheckCircle size={15} />
                     </button>
                   )}
-                  <button className="ho-icon-btn danger" title="Delete" onClick={() => removeEscalation(e.id)}>
+                  <button className="ho-icon-btn danger" title="Delete" onClick={async () => {
+                    const ok = await confirm({
+                      title: 'Delete Escalation',
+                      message: `Permanently delete "${e.title}"? This cannot be undone.`,
+                      confirmLabel: 'Delete',
+                      variant: 'danger',
+                    });
+                    if (ok) removeEscalation(e.id);
+                  }}>
                     <Trash2 size={15} />
                   </button>
                 </div>
@@ -151,6 +161,7 @@ export default function EscalationLog() {
           })}
         </div>
       )}
+      {ConfirmEl}
     </div>
   );
 }
