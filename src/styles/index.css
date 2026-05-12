@@ -4643,7 +4643,7 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   }
   .drug-ref-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 0.875rem;
   }
   .drug-ref-toolbar {
     gap: 6px;
@@ -7975,9 +7975,10 @@ textarea:focus-visible {
    DRUG REFERENCE PAGE
    =================================================================== */
 .drug-ref-page {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 1rem 1.5rem 2rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .drug-ref-page h1 {
   font-size: 1.6rem;
@@ -8015,8 +8016,15 @@ textarea:focus-visible {
 .drug-cat-pill.active { background: var(--primary-light); color: var(--primary); border-color: rgba(59,130,246,0.4); }
 .drug-ref-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+/* Full-width search bar inside drug reference page */
+.drug-ref-page .lab-ref-search-wrap {
+  max-width: 100%;
+}
+.drug-ref-page .lab-ref-toolbar {
+  margin-bottom: 1.25rem;
 }
 .drug-ref-card {
   background: var(--glass);
