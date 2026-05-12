@@ -40,6 +40,7 @@ export default function AmbulanceTracker() {
   const [showERStatus, setShowERStatus] = useState(true);
   const [toasts, setToasts] = useState<{ id: number; msg: string; priority: string }[]>([]);
   const prevAmbCountRef = useRef(state.ambulances.filter(a => a.status === 'en-route').length);
+  const toastTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // ── ER Status derived data ──────────────────────────────────────
   const waiting = state.tickets.filter(t => t.status === 'waiting');
@@ -76,10 +77,18 @@ export default function AmbulanceTracker() {
         priority: newest.priority,
       }]);
       // Auto-dismiss after 8s
-      setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 8000);
+      const timer = setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 8000);
+      toastTimersRef.current.push(timer);
     }
     prevAmbCountRef.current = currentEnRoute.length;
   }, [state.ambulances]);
+
+  // Clear all pending toast timers on unmount
+  useEffect(() => {
+    return () => {
+      toastTimersRef.current.forEach(clearTimeout);
+    };
+  }, []);
 
   useEffect(() => {
     const i = setInterval(() => setNow(new Date()), 1000);

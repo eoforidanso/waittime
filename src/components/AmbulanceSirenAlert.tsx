@@ -35,7 +35,16 @@ export default function AmbulanceSirenAlert() {
     }
 
     prevEnRouteRef.current = currentEnRoute.map(a => a.id);
-  }, [state.ambulances]);
+  // Use a stable string key so the effect only re-runs when ambulance IDs/statuses actually change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.ambulances.map(a => `${a.id}:${a.status}`).join(',')]);
+
+  // Stop siren if component unmounts (e.g. user logs out)
+  useEffect(() => {
+    return () => {
+      stopSirenRef.current?.();
+    };
+  }, []);
 
   const dismiss = (id: string) => {
     setAlerts(prev => {

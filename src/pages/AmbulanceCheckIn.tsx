@@ -199,7 +199,7 @@ export default function AmbulanceCheckIn() {
 
       <div className="amb-timestamp">
         {now.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
-        {' Â· '}
+        {' · '}
         {now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}
       </div>
 

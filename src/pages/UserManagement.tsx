@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, UserPlus, Trash2, Shield, ShieldCheck, AlertCircle, Check, Loader2, WifiOff, Wifi } from 'lucide-react';
 import { useAuth, type StaffRole, type StaffUser } from '../context/AuthContext';
+import { useConfirm } from '../components/ConfirmDialog';
 
 // Roles the admin can manually toggle offline/online
 const TOGGLEABLE_ROLES: StaffRole[] = ['doctor', 'nurse', 'receptionist', 'ems'];
@@ -25,6 +26,7 @@ const ALL_ROLES: StaffRole[] = ['admin', 'doctor', 'nurse', 'receptionist', 'ems
 
 export default function UserManagement() {
   const { user, staffProfile, isAdmin, listStaffUsers, createStaffAccount, updateStaffRole, deleteStaffAccount, setOnlineStatus } = useAuth();
+  const { confirm, Dialog: ConfirmEl } = useConfirm();
   const [staffList, setStaffList] = useState<StaffUser[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [listError, setListError] = useState('');
@@ -103,7 +105,13 @@ export default function UserManagement() {
   };
 
   const handleDelete = async (target: StaffUser) => {
-    if (!window.confirm(`Permanently remove ${target.displayName ?? target.email} from MediQ? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: 'Remove Staff Account',
+      message: `Permanently remove ${target.displayName ?? target.email} from MediQ? This cannot be undone.`,
+      confirmLabel: 'Remove',
+      variant: 'danger',
+    });
+    if (!ok) return;
     setDeletingId(target.uid);
     try { await deleteStaffAccount(target.uid); await refreshList(); }
     catch { /* ignore */ }
@@ -270,6 +278,7 @@ export default function UserManagement() {
           <Shield size={14} /> Only admins can manage accounts. Contact your administrator.
         </p>
       )}
+      {ConfirmEl}
     </div>
   );
 }
