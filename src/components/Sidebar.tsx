@@ -59,6 +59,7 @@ const ROUTE_TAB: Record<string, SidebarTab> = {
   '/messages': 'team',
   '/analytics': 'reports',
   '/records': 'reports',
+  '/registry': 'reports',
   '/users': 'reports',
   '/audit': 'reports',
 };
@@ -275,6 +276,9 @@ export default function Sidebar({ mode, className = '', onNavClick }: SidebarPro
                 {isAdmin && (
                   <>
                     <div className="sidebar-nav-divider">Admin</div>
+                    <NavLink to="/registry" onClick={onNavClick}>
+                      <ClipboardList size={18} /> Patient Registry
+                    </NavLink>
                     <NavLink to="/users" onClick={onNavClick}>
                       <Users size={18} /> User Management
                     </NavLink>

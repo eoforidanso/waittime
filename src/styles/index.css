@@ -11249,3 +11249,183 @@ a:focus-visible {
   .messages-chat-item { padding: 10px; justify-content: center; }
   .messages-bubble { max-width: 88%; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   PATIENT REGISTRY  (.registry-*)
+══════════════════════════════════════════════════════════ */
+.registry-page {
+  padding: 2rem 2.5rem;
+}
+.registry-info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.registry-info-note {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.registry-access-denied,
+.registry-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 4rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.registry-access-denied h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.registry-access-denied p,
+.registry-empty p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+.registry-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+}
+.registry-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.registry-table thead {
+  background: rgba(255,255,255,0.04);
+}
+.registry-table th {
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--glass-border);
+  white-space: nowrap;
+}
+.registry-table td {
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: middle;
+}
+.registry-row:last-child td { border-bottom: none; }
+.registry-row:hover td { background: rgba(255,255,255,0.02); }
+.registry-row.editing td { background: rgba(59,130,246,0.05); }
+
+.registry-ticket-num {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+}
+.registry-service {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.registry-priority {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.registry-status {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+.registry-placeholder {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+.registry-age {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.registry-age-preview {
+  font-size: 0.82rem;
+  min-width: 56px;
+}
+.registry-empty-cell {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* Inline inputs */
+.registry-input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  min-width: 90px;
+  transition: border-color 0.15s;
+}
+.registry-input:focus { border-color: #3b82f6; }
+.registry-initial {
+  max-width: 52px;
+  min-width: 40px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+}
+
+/* Action buttons */
+.registry-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  white-space: nowrap;
+}
+.registry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.registry-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.registry-btn-edit   { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+.registry-btn-edit:hover { background: rgba(99,102,241,0.28); }
+.registry-btn-save   { background: rgba(16,185,129,0.15); color: #34d399; }
+.registry-btn-save:hover { background: rgba(16,185,129,0.28); }
+.registry-btn-cancel { background: rgba(239,68,68,0.12); color: #f87171; padding: 4px 7px; }
+.registry-btn-cancel:hover { background: rgba(239,68,68,0.24); }
+
+@media (max-width: 900px) {
+  .registry-page { padding: 1rem; }
+  .registry-table th, .registry-table td { padding: 0.5rem 0.6rem; }
+}
+@media (max-width: 640px) {
+  .registry-table { font-size: 0.75rem; }
+  .registry-info-bar { flex-direction: column; align-items: flex-start; }
+}
