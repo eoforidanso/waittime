@@ -1270,7 +1270,7 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-family: inherit;
   transition: border-color 0.2s, background 0.2s;
   outline: none;
@@ -11325,7 +11325,7 @@ a:focus-visible {
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text-primary);
-  font-size: 0.875rem;
+  font-size: 1rem;
   padding: 9px 14px;
   resize: none;
   overflow: hidden;
@@ -12019,5 +12019,128 @@ a:focus-visible {
     min-width: 0;
   }
   .messages-bubble { max-width: 90%; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   iOS SAFARI 16 FIXES
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── A. Prevent auto-zoom on input focus (base font is 15px < 16px threshold) ─ */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea,
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  .amb-login-field input,
+  .messages-input,
+  .cmd-input,
+  .messages-search-bar input,
+  .sidebar-search input,
+  [type="text"],
+  [type="email"],
+  [type="password"],
+  [type="number"],
+  [type="search"],
+  [type="tel"] {
+    font-size: 16px !important;
+  }
+}
+
+/* ── B. 100dvh fix for iOS — body/app layout viewport height ──────────────── */
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.app-layout {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ── C. Safe-area insets for notch (top) and home bar (bottom) ────────────── */
+/* Sidebar — push content down on iPhone notch */
+@media (max-width: 768px) {
+  .sidebar {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .sidebar-brand {
+    padding-top: calc(1.75rem + env(safe-area-inset-top, 0px));
+  }
+
+  /* FAB stays above home bar */
+  .mobile-nav-toggle {
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    right: calc(1rem + env(safe-area-inset-right, 0px));
+  }
+
+  /* Main content padding-bottom clears FAB + home bar */
+  .main-content {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Messages input bar stays above home bar */
+  .messages-input-bar {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Non-mobile: still apply bottom safe area if somehow visible */
+@media (min-width: 769px) {
+  .sidebar {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* ── D. Fix overscroll/bounce momentum in scrollable areas ───────────────── */
+@supports (-webkit-touch-callout: none) {
+  .sidebar-nav,
+  .messages-body,
+  .messages-chat-list,
+  .main-content,
+  .queue-workspace,
+  .records-table-wrap {
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Prevent body bounce */
+  body { overscroll-behavior: none; }
+}
+
+/* ── E. Tap highlight: remove grey flash on tappable elements ─────────────── */
+@supports (-webkit-touch-callout: none) {
+  a, button, [role="button"],
+  .sidebar-nav a,
+  .messages-chat-item,
+  .counter-chip,
+  .queue-item,
+  .waiting-row {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ── F. Fix backdrop-filter support in older iOS 16 builds ───────────────── */
+@supports not (backdrop-filter: blur(1px)) {
+  .sidebar { background: rgba(10, 16, 30, 0.97); }
+  .mobile-nav-toggle { background: rgba(10, 16, 30, 0.97); }
+}
+
+/* ── G. Input appearance — iOS adds inner shadow to inputs by default ─────── */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  /* But keep number/date spinners for number inputs */
+  input[type="number"] { -webkit-appearance: textfield; }
+}
+
+
+/* ── H. 100dvh for full-screen page containers ───────────────────────────── */
+.amb-login-page,
+.amb-checkin,
+.patient-view,
+.display-board,
+.portal-page {
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
