@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f1623;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a2035;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cross-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#60a5fa;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="subtle-glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle grid lines -->
+  <g opacity="0.04" stroke="#ffffff" stroke-width="1">
+    <line x1="0" y1="105" x2="1200" y2="105"/>
+    <line x1="0" y1="210" x2="1200" y2="210"/>
+    <line x1="0" y1="315" x2="1200" y2="315"/>
+    <line x1="0" y1="420" x2="1200" y2="420"/>
+    <line x1="0" y1="525" x2="1200" y2="525"/>
+    <line x1="150" y1="0" x2="150" y2="630"/>
+    <line x1="300" y1="0" x2="300" y2="630"/>
+    <line x1="450" y1="0" x2="450" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="750" y1="0" x2="750" y2="630"/>
+    <line x1="900" y1="0" x2="900" y2="630"/>
+    <line x1="1050" y1="0" x2="1050" y2="630"/>
+  </g>
+
+  <!-- Decorative glowing circles -->
+  <circle cx="980" cy="120" r="180" fill="#3b82f6" opacity="0.06"/>
+  <circle cx="220" cy="520" r="140" fill="#8b5cf6" opacity="0.06"/>
+  <circle cx="980" cy="120" r="90" fill="#3b82f6" opacity="0.05"/>
+
+  <!-- Top accent bar -->
+  <rect x="0" y="0" width="1200" height="5" fill="url(#accent)"/>
+
+  <!-- Medical cross icon -->
+  <g transform="translate(96, 180)" filter="url(#subtle-glow)">
+    <rect x="14" y="0" width="22" height="50" rx="4" fill="url(#cross-grad)"/>
+    <rect x="0" y="14" width="50" height="22" rx="4" fill="url(#cross-grad)"/>
+  </g>
+
+  <!-- MediQ wordmark -->
+  <text x="166" y="220" font-family="'Segoe UI', Arial, sans-serif" font-size="72" font-weight="800" fill="#f1f5f9" letter-spacing="-2">MediQ</text>
+
+  <!-- Accent underline -->
+  <rect x="96" y="238" width="380" height="4" rx="2" fill="url(#accent)"/>
+
+  <!-- Tagline -->
+  <text x="96" y="290" font-family="'Segoe UI', Arial, sans-serif" font-size="26" font-weight="400" fill="#94a3b8" letter-spacing="0.5">Ghana's Intelligent ER Management Platform</text>
+
+  <!-- Feature pills -->
+  <g transform="translate(96, 330)">
+    <!-- Triage pill -->
+    <rect x="0" y="0" width="160" height="40" rx="20" fill="#3b82f620" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="80" y="26" font-family="'Segoe UI', Arial, sans-serif" font-size="16" fill="#60a5fa" text-anchor="middle" font-weight="600">⚡ Triage</text>
+
+    <!-- Queue pill -->
+    <rect x="176" y="0" width="160" height="40" rx="20" fill="#8b5cf620" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="256" y="26" font-family="'Segoe UI', Arial, sans-serif" font-size="16" fill="#a78bfa" text-anchor="middle" font-weight="600">📋 Queue</text>
+
+    <!-- Analytics pill -->
+    <rect x="352" y="0" width="180" height="40" rx="20" fill="#10b98120" stroke="#10b981" stroke-width="1.5"/>
+    <text x="442" y="26" font-family="'Segoe UI', Arial, sans-serif" font-size="16" fill="#34d399" text-anchor="middle" font-weight="600">📊 Analytics</text>
+
+    <!-- Ambulance pill -->
+    <rect x="548" y="0" width="190" height="40" rx="20" fill="#f59e0b20" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="643" y="26" font-family="'Segoe UI', Arial, sans-serif" font-size="16" fill="#fbbf24" text-anchor="middle" font-weight="600">🚑 Ambulance</text>
+  </g>
+
+  <!-- Divider -->
+  <line x1="96" y1="420" x2="1104" y2="420" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+
+  <!-- Dedication section -->
+  <text x="96" y="470" font-family="'Segoe UI', Arial, sans-serif" font-size="18" fill="#64748b" letter-spacing="3" font-weight="600">IN HONOR OF</text>
+
+  <!-- Heart -->
+  <text x="96" y="530" font-family="'Segoe UI', Arial, sans-serif" font-size="34" fill="#ef4444">♥</text>
+
+  <text x="140" y="530" font-family="'Segoe UI', Arial, sans-serif" font-size="34" font-weight="700" fill="#f1f5f9">Ernest Amissah</text>
+
+  <text x="96" y="572" font-family="'Segoe UI', Arial, sans-serif" font-size="18" fill="#64748b" font-style="italic">Whose vision inspired better healthcare for every patient.</text>
+
+  <!-- mediqgh.com -->
+  <text x="1104" y="572" font-family="'Segoe UI', Arial, sans-serif" font-size="18" fill="#3b82f6" text-anchor="end" font-weight="600">mediqgh.com</text>
+
+  <!-- Bottom accent bar -->
+  <rect x="0" y="625" width="1200" height="5" fill="url(#accent)"/>
+</svg>

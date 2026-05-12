@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-route
 import { QueueProvider } from './context/QueueContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { FeatureFlagsProvider, useFeatureFlags } from './context/FeatureFlagsContext';
+import SplashScreen from './components/SplashScreen';
 
 /** Catches render errors in any child page so the sidebar stays visible */
 class PageErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -233,8 +234,10 @@ function StaffLoginRoute() {
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   return (
     <AuthProvider>
+      {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
       <AppBridge />
     </AuthProvider>
   );
