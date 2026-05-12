@@ -1435,6 +1435,7 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 }
 
 
+.amb-alert-stack {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
