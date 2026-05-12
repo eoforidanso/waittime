@@ -11679,3 +11679,345 @@ a:focus-visible {
 .btn-edit-inline:hover {
   background: rgba(99,102,241,0.24);
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   MOBILE LAYOUT — COMPREHENSIVE FIXES  (≤768px / ≤480px)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Give main-content bottom padding so the FAB never hides content ── */
+@media (max-width: 768px) {
+  .main-content {
+    padding-bottom: 80px;
+  }
+}
+
+/* ── 2. Messages page — horizontal tab strip on mobile ─────────────────── */
+@media (max-width: 768px) {
+  .messages-page {
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Sidebar → compact horizontal scroll strip */
+  .messages-sidebar {
+    width: 100%;
+    min-width: unset;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    overflow: visible;
+  }
+  .messages-sidebar-header {
+    padding: 10px 12px 8px;
+    font-size: 0.82rem;
+  }
+  .messages-chat-list {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px 10px 8px;
+    gap: 6px;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+  .messages-chat-list::-webkit-scrollbar { display: none; }
+  .messages-list-divider { display: none; }
+
+  .messages-chat-item {
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    min-width: max-content;
+    min-height: unset;
+    height: auto;
+    gap: 7px;
+    border: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+    font-size: 0.82rem;
+  }
+  .messages-chat-item.active {
+    background: rgba(59,130,246,0.18);
+    border-color: rgba(59,130,246,0.4);
+  }
+  .messages-chat-avatar {
+    width: 22px;
+    height: 22px;
+    font-size: 0.72rem;
+  }
+  .messages-chat-preview,
+  .messages-chat-role { display: none; }
+  .messages-chat-name {
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  /* Main chat area takes remaining space */
+  .messages-main {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Input bar stays accessible above keyboard */
+  .messages-input-bar {
+    padding: 8px 10px;
+  }
+}
+
+/* ── 3. Reduce button min-height in dense list/table contexts ───────────── */
+@media (max-width: 768px) {
+  .queue-item button,
+  .waiting-row button,
+  .in-bay-row button,
+  .nurse-list-item button,
+  .counter-card button,
+  .serving-item button,
+  .record-header button,
+  .action-buttons button {
+    min-height: unset;
+  }
+
+  /* But keep stand-alone action buttons touch-friendly */
+  .btn-call-next,
+  .amb-login-btn,
+  .staff-login-btn,
+  .submit-btn,
+  .btn-primary {
+    min-height: 44px;
+  }
+}
+
+/* ── 4. Dashboard header — shrink on very small screens ─────────────────── */
+@media (max-width: 480px) {
+  .dash-title { font-size: 1rem; gap: 6px; }
+  .dash-title svg { width: 18px; height: 18px; }
+  .dash-subtitle { font-size: 0.72rem; margin-left: 24px; }
+  .dash-header { margin-bottom: 0.75rem; gap: 0.3rem; }
+  .dash-header-right { gap: 0.4rem; }
+  .btn-print { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+  .live-indicator { font-size: 0.72rem; }
+  .live-dot { width: 6px; height: 6px; }
+}
+
+/* ── 5. KPI strip on small phones — tighter cards ───────────────────────── */
+@media (max-width: 480px) {
+  .dash-kpi-card {
+    padding: 0.55rem 0.6rem;
+    gap: 0.5rem;
+  }
+  .dash-kpi-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+  .dash-kpi-icon svg { width: 15px; height: 15px; }
+  .dash-kpi-val { font-size: 1.2rem; }
+  .dash-kpi-sm  { font-size: 0.95rem; }
+  .dash-kpi-label { font-size: 0.58rem; white-space: normal; line-height: 1.1; }
+}
+
+/* ── 6. Counter/bay selector chips — smaller on phones ──────────────────── */
+@media (max-width: 480px) {
+  .counter-chip {
+    padding: 0.4rem 0.7rem;
+    min-width: 72px;
+    font-size: 0.78rem;
+  }
+  .counter-chip small { font-size: 0.62rem; }
+  .counter-selector label { font-size: 0.82rem; margin-bottom: 0.5rem; }
+}
+
+/* ── 7. Waiting-queue row — compact on small phones ─────────────────────── */
+@media (max-width: 480px) {
+  .waiting-row {
+    grid-template-columns: 20px 60px 1fr auto;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.5rem;
+    gap: 6px;
+  }
+  .wr-bay-btn { font-size: 0.7rem; padding: 3px 7px; }
+}
+
+/* ── 8. In-bay list — stack edit button below info on very small ─────────── */
+@media (max-width: 480px) {
+  .in-bay-row {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .btn-edit-inline {
+    margin-left: auto;
+    font-size: 0.72rem;
+    padding: 0.25rem 0.55rem;
+  }
+}
+
+/* ── 9. Page header universal — no overflow on narrow screens ───────────── */
+@media (max-width: 480px) {
+  .page-header h1 {
+    font-size: 1.1rem;
+    gap: 7px;
+  }
+  .page-header h1 svg {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+  }
+  .page-header { margin-bottom: 1rem; }
+}
+
+/* ── 10. Stat cards — single column with row layout on phones ───────────── */
+@media (max-width: 480px) {
+  .stat-value { font-size: 1.3rem; }
+  .stat-card  { gap: 0.75rem; }
+}
+
+/* ── 11. Form fields — full-width and legible ───────────────────────────── */
+@media (max-width: 480px) {
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 0.9rem;
+    padding: 0.55rem 0.75rem;
+  }
+  .checkin-form h3 { font-size: 0.88rem; }
+}
+
+/* ── 12. Modal — tighter on small phones ────────────────────────────────── */
+@media (max-width: 480px) {
+  .modal {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  .modal h3 { font-size: 1rem; }
+}
+
+/* ── 13. Transfer / status / assign menus — full width ─────────────────── */
+@media (max-width: 480px) {
+  .transfer-options {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .assign-bay-chips { flex-direction: column; }
+  .assign-bay-chip  { width: 100%; justify-content: space-between; }
+}
+
+/* ── 14. Action buttons — 2 per row, equal width ────────────────────────── */
+@media (max-width: 480px) {
+  .action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .action-buttons button {
+    flex: unset;
+    width: 100%;
+    padding: 0.5rem 0.3rem;
+    font-size: 0.73rem;
+    justify-content: center;
+  }
+}
+
+/* ── 15. Sidebar — ensure it clears the top safely ──────────────────────── */
+@media (max-width: 768px) {
+  .sidebar-brand {
+    padding: 1.25rem 1rem;
+  }
+  .sidebar-search {
+    margin: 0.6rem 0.75rem;
+  }
+}
+
+/* ── 16. Queue workspace — reduce gap on small screens ─────────────────── */
+@media (max-width: 480px) {
+  .current-patient-card,
+  .waiting-queue-card,
+  .in-bay-list-card {
+    padding: 1rem;
+  }
+  .queue-workspace { gap: 0.75rem; }
+  .ticket-number-large { font-size: 1.1rem; padding: 0.5rem 0.9rem; }
+}
+
+/* ── 17. Analytics row layouts ───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .analytics-row-3-2,
+  .analytics-row-equal {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── 18. Inpatient bed board — scrollable on small screens ──────────────── */
+@media (max-width: 480px) {
+  .inpatient-page { padding: 0.85rem; }
+  .ipt-units-grid { grid-template-columns: 1fr; }
+  .ipt-beds-grid  { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 4px; }
+  .ipt-bed-btn    { padding: 0.4rem 0.3rem; font-size: 0.68rem; }
+}
+
+/* ── 19. User management — hide extra columns, fix table ─────────────────── */
+@media (max-width: 480px) {
+  .um-header { flex-wrap: wrap; gap: 0.5rem; }
+  .um-header-left { flex: 1; min-width: 0; }
+  .um-table { font-size: 0.78rem; }
+  .um-table th, .um-table td { padding: 0.5rem 0.5rem; }
+  /* Hide created-at column */
+  .um-table th:nth-child(5),
+  .um-table td:nth-child(5) { display: none; }
+}
+
+/* ── 20. Patient Registry table ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .registry-table { font-size: 0.75rem; }
+  .registry-table th,
+  .registry-table td { padding: 0.4rem 0.4rem; }
+  /* Hide "Updated By" column */
+  .registry-table th:last-child,
+  .registry-table td:last-child { display: none; }
+}
+
+/* ── 21. Ambulance check-in form — full width fields ────────────────────── */
+@media (max-width: 480px) {
+  .amb-checkin-page  { padding: 1rem 0.75rem; }
+  .amb-checkin-form  { padding: 1rem; }
+  .amb-form-row      { flex-direction: column; gap: 8px; }
+  .amb-form-row > *  { width: 100% !important; }
+  .amb-priority-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── 22. Edit patient modal — full width on phone ───────────────────────── */
+@media (max-width: 480px) {
+  .edit-patient-modal {
+    width: calc(100vw - 1.5rem);
+    padding: 1rem;
+  }
+  .edit-patient-footer {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .edit-patient-footer button { width: 100%; justify-content: center; }
+}
+
+/* ── 23. Text overflow prevention ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  h1, h2, h3 {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+}
+
+
+/* ── Messages: restore chat-info inside the tab strip (overrides 640px rule) ─ */
+@media (max-width: 768px) {
+  .messages-chat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+  }
+  .messages-bubble { max-width: 90%; }
+}
+
