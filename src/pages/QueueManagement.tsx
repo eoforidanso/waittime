@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQueue } from '../context/QueueContext';
 import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmDialog';
-import type { ServiceType, TicketStatus } from '../types';
+import type { ServiceType, TicketStatus, Priority } from '../types';
 import { SERVICE_TYPES, SERVICE_COLORS, TRIAGE_COLORS, TICKET_STATUS_LABELS, TICKET_STATUS_COLORS } from '../types';
 import type { Ambulance } from '../types';
 import { WaitTimer, formatTriageTime } from '../utils/waitTime';
@@ -21,13 +21,16 @@ import {
   ChevronDown,
   Tag,
   Building2,
+  Pencil,
 } from 'lucide-react';
 
 export default function QueueManagement() {
-  const { state, callNext, completeTicket, noShow, markDeceased, transferTicket, recallTicket, updateTicketStatus, admitToInpatient } = useQueue();
+  const { state, callNext, completeTicket, noShow, markDeceased, transferTicket, recallTicket, updateTicketStatus, admitToInpatient, editTicket } = useQueue();
   const toast = useToast();
   const { confirm, Dialog: ConfirmEl } = useConfirm();
   const [selectedCounter, setSelectedCounter] = useState<number | null>(null);
+  const [editModal, setEditModal] = useState<{ ticketId: string; show: boolean }>({ ticketId: '', show: false });
+  const [editForm, setEditForm] = useState({ patientName: '', age: '', chiefComplaint: '', priority: 'urgent' as Priority, notes: '' });
   const [transferTarget, setTransferTarget] = useState<{ ticketId: string; show: boolean }>({ ticketId: '', show: false });
   const [assignTarget, setAssignTarget] = useState<string | null>(null);
   const [statusTarget, setStatusTarget] = useState<string | null>(null); // ticketId for status picker
@@ -227,6 +230,17 @@ export default function QueueManagement() {
                   >
                     <Building2 size={16} /> Admit to Ward
                   </button>
+                  <button
+                    className="btn-transfer"
+                    style={{ background: 'rgba(99,102,241,0.12)', borderColor: '#6366f1', color: '#6366f1' }}
+                    onClick={() => {
+                      const t = counter.currentTicket!;
+                      setEditForm({ patientName: t.patientName, age: t.age != null ? String(t.age) : '', chiefComplaint: t.chiefComplaint ?? '', priority: t.priority, notes: t.notes ?? '' });
+                      setEditModal({ ticketId: t.id, show: true });
+                    }}
+                  >
+                    <Pencil size={16} /> Edit Patient
+                  </button>
                 </div>
               </div>
             ) : (
@@ -312,8 +326,135 @@ export default function QueueManagement() {
               </button>
             )}
           </div>
+
+          {/* All patients currently in this bay */}
+          {(() => {
+            const inBay = state.tickets.filter(t => t.status === 'serving' && t.counterNumber === counter.id);
+            if (inBay.length === 0) return null;
+            return (
+              <div className="in-bay-list-card">
+                <h3>All Patients in {counter.name} ({inBay.length})</h3>
+                <div className="in-bay-list">
+                  {inBay.map(t => (
+                    <div key={t.id} className={`in-bay-row priority-${t.priority}`}>
+                      <span className="ticket-badge" style={{ background: SERVICE_COLORS[t.service] }}>{t.ticketNumber}</span>
+                      <div className="in-bay-info">
+                        <strong>{t.patientName}</strong>
+                        {t.age != null && <span className="in-bay-age">{t.age}y</span>}
+                        {t.chiefComplaint && <small>{t.chiefComplaint}</small>}
+                      </div>
+                      <span className={`priority-tag ${t.priority}`}>{t.priority}</span>
+                      <button
+                        className="btn-edit-inline"
+                        onClick={() => {
+                          setEditForm({ patientName: t.patientName, age: t.age != null ? String(t.age) : '', chiefComplaint: t.chiefComplaint ?? '', priority: t.priority, notes: t.notes ?? '' });
+                          setEditModal({ ticketId: t.id, show: true });
+                        }}
+                        title="Edit patient"
+                      >
+                        <Pencil size={14} /> Edit
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
+
+      {/* Edit Patient modal */}
+      {editModal.show && (() => {
+        return (
+          <div className="modal-overlay" onClick={() => setEditModal({ ticketId: '', show: false })}>
+            <div className="modal edit-patient-modal" onClick={e => e.stopPropagation()}>
+              <div className="edit-patient-header">
+                <h3><Pencil size={18} /> Edit Patient Details</h3>
+                <button className="ipt-modal-close" onClick={() => setEditModal({ ticketId: '', show: false })}><X size={18} /></button>
+              </div>
+              <div className="edit-patient-form">
+                <label>
+                  Patient Name
+                  <input
+                    type="text"
+                    className="edit-patient-input"
+                    value={editForm.patientName}
+                    onChange={e => setEditForm(f => ({ ...f, patientName: e.target.value }))}
+                    placeholder="Last, First"
+                    autoFocus
+                  />
+                </label>
+                <label>
+                  Age (years)
+                  <input
+                    type="number"
+                    className="edit-patient-input"
+                    value={editForm.age}
+                    onChange={e => setEditForm(f => ({ ...f, age: e.target.value }))}
+                    placeholder="e.g. 45"
+                    min={0}
+                    max={130}
+                  />
+                </label>
+                <label>
+                  Chief Complaint
+                  <input
+                    type="text"
+                    className="edit-patient-input"
+                    value={editForm.chiefComplaint}
+                    onChange={e => setEditForm(f => ({ ...f, chiefComplaint: e.target.value }))}
+                    placeholder="e.g. Chest pain"
+                  />
+                </label>
+                <label>
+                  Triage Priority
+                  <select
+                    className="edit-patient-input"
+                    value={editForm.priority}
+                    onChange={e => setEditForm(f => ({ ...f, priority: e.target.value as Priority }))}
+                  >
+                    <option value="critical">Critical</option>
+                    <option value="emergent">Emergent</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="non-urgent">Non-Urgent</option>
+                  </select>
+                </label>
+                <label>
+                  Notes
+                  <textarea
+                    className="edit-patient-input"
+                    value={editForm.notes}
+                    onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
+                    placeholder="Optional notes"
+                    rows={2}
+                  />
+                </label>
+              </div>
+              <div className="edit-patient-footer">
+                <button className="btn-cancel" onClick={() => setEditModal({ ticketId: '', show: false })}>Cancel</button>
+                <button
+                  className="btn-primary"
+                  disabled={!editForm.patientName.trim()}
+                  onClick={() => {
+                    editTicket(
+                      editModal.ticketId,
+                      editForm.patientName.trim(),
+                      editForm.priority,
+                      editForm.age ? parseInt(editForm.age, 10) : undefined,
+                      editForm.chiefComplaint.trim() || undefined,
+                      editForm.notes.trim() || undefined,
+                    );
+                    toast.success('Patient updated', editForm.patientName.trim());
+                    setEditModal({ ticketId: '', show: false });
+                  }}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Transfer modal */}
       {transferTarget.show && (

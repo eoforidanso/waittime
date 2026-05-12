@@ -63,7 +63,8 @@ type QueueAction =
   | { type: 'ADD_INPATIENT_UNIT'; payload: { id: string; name: string; abbreviation: string; color: string; bedCount: number } }
   | { type: 'EDIT_INPATIENT_UNIT'; payload: { unitId: string; name: string; abbreviation: string; color: string } }
   | { type: 'DELETE_INPATIENT_UNIT'; payload: { unitId: string } }
-  | { type: 'ADD_INPATIENT_BEDS'; payload: { unitId: string; count: number } };
+  | { type: 'ADD_INPATIENT_BEDS'; payload: { unitId: string; count: number } }
+  | { type: 'EDIT_TICKET'; payload: { ticketId: string; patientName: string; age?: number; chiefComplaint?: string; priority: Priority; notes?: string } };
 
 // ── Mock seed helpers ──────────────────────────────────────────────────────
 const ago = (min: number) => new Date(Date.now() - min * 60_000);
@@ -397,6 +398,19 @@ function estimateWaitTime(tickets: Ticket[], service: ServiceType): number {
 
 function queueReducer(state: QueueState, action: QueueAction): QueueState {
   switch (action.type) {
+    case 'EDIT_TICKET': {
+      const { ticketId, patientName, age, chiefComplaint, priority, notes } = action.payload;
+      const updatedTickets = state.tickets.map(t =>
+        t.id === ticketId ? { ...t, patientName, age, chiefComplaint, priority, notes } : t
+      );
+      const updatedCounters = state.counters.map(c =>
+        c.currentTicket?.id === ticketId
+          ? { ...c, currentTicket: { ...c.currentTicket, patientName, age, chiefComplaint, priority, notes } }
+          : c
+      );
+      return { ...state, tickets: updatedTickets, counters: updatedCounters };
+    }
+
     case 'ADD_TICKET': {
       const { patientName, age, service, priority, notes } = action.payload;
       const { number, updatedCounters } = generateTicketNumber(service, state.ticketCounters);
@@ -937,6 +951,7 @@ interface QueueContextType {
   editInpatientUnit: (unitId: string, name: string, abbreviation: string, color: string) => void;
   deleteInpatientUnit: (unitId: string) => void;
   addInpatientBeds: (unitId: string, count: number) => void;
+  editTicket: (ticketId: string, patientName: string, priority: Priority, age?: number, chiefComplaint?: string, notes?: string) => void;
 }
 
 const QueueContext = createContext<QueueContextType | null>(null);
@@ -1273,6 +1288,11 @@ export function QueueProvider({ children, auditUser = null }: { children: ReactN
     dispatch({ type: 'ADD_INPATIENT_BEDS', payload: { unitId, count } });
   }, []);
 
+  const editTicket = useCallback((ticketId: string, patientName: string, priority: Priority, age?: number, chiefComplaint?: string, notes?: string) => {
+    dispatch({ type: 'EDIT_TICKET', payload: { ticketId, patientName, age, chiefComplaint, priority, notes } });
+    logAudit(auditUserRef.current, 'Ticket Edited', `${patientName}${age ? `, ${age}y` : ''} | ${priority}`);
+  }, []);
+
   // Derive bedsOccupied from actual serving ticket counts so it always reflects real patient numbers
   const derivedState = useMemo(() => ({
     ...state,
@@ -1324,6 +1344,7 @@ export function QueueProvider({ children, auditUser = null }: { children: ReactN
       editInpatientUnit,
       deleteInpatientUnit,
       addInpatientBeds,
+      editTicket,
     }}>
       {children}
     </QueueContext.Provider>
