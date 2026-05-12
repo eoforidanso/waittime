@@ -28,6 +28,7 @@ import {
   Sun,
   Moon,
   BarChart2,
+  MessageSquare,
   Search,
   Calculator,
   Building2,
@@ -54,6 +55,7 @@ const ROUTE_TAB: Record<string, SidebarTab> = {
   '/handover': 'team',
   '/escalation': 'team',
   '/shifts': 'team',
+  '/messages': 'team',
   '/analytics': 'reports',
   '/records': 'reports',
   '/users': 'reports',
@@ -248,6 +250,9 @@ export default function Sidebar({ mode, className = '', onNavClick }: SidebarPro
                 </NavLink>
                 <NavLink to="/shifts" onClick={onNavClick}>
                   <CalendarDays size={18} /> Shift Schedule
+                </NavLink>
+                <NavLink to="/messages" onClick={onNavClick}>
+                  <MessageSquare size={18} /> Messages
                 </NavLink>
               </>
             )}

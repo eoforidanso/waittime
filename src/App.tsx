@@ -39,6 +39,7 @@ const UserManagement   = lazy(() => import('./pages/UserManagement'));
 const AuditLog         = lazy(() => import('./pages/AuditLog'));
 const PatientRecords   = lazy(() => import('./pages/PatientRecords'));
 const PatientView      = lazy(() => import('./pages/PatientView'));
+const StaffMessages    = lazy(() => import('./pages/StaffMessages'));
 import useKeyboardShortcuts from './utils/useKeyboardShortcuts';
 import { ToastProvider } from './components/Toast';
 import CommandPalette from './components/CommandPalette';
@@ -81,6 +82,7 @@ function StaffLayout() {
               <Route path="/users" element={<UserManagement />} />
               <Route path="/audit" element={<AuditLog />} />
               <Route path="/records" element={<PatientRecords />} />
+              <Route path="/messages" element={<StaffMessages />} />
             </Routes>
           </Suspense>
         </main>
