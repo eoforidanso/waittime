@@ -199,12 +199,14 @@ function AmbulanceLayout() {
         <div className={`mobile-overlay ${sidebarOpen ? 'open' : ''}`} onClick={closeSidebar} />
         <Sidebar mode="ambulance" className={sidebarOpen ? 'open' : ''} onNavClick={closeSidebar} />
         <main className="main-content" key={location.pathname}>
+          <PageErrorBoundary>
           <Suspense fallback={<div className="page-loading" />}>
             <Routes>
               <Route path="/" element={<AmbulanceCheckIn />} />
               <Route path="/tracker" element={<AmbulanceTracker />} />
             </Routes>
           </Suspense>
+          </PageErrorBoundary>
         </main>
         <button
           className="mobile-nav-toggle"
@@ -241,8 +243,8 @@ function AppBridge() {
             {/* Public routes — no sidebar */}
             <Route path="/login" element={<LoginPortal />} />
             <Route path="/staff-login" element={<StaffLogin onLogin={() => { window.location.href = '/'; }} />} />
-            <Route path="/display" element={<DisplayBoard />} />
-            <Route path="/patient" element={<Suspense fallback={<div className="page-loading" />}><PatientView /></Suspense>} />
+            <Route path="/display" element={<PageErrorBoundary><DisplayBoard /></PageErrorBoundary>} />
+            <Route path="/patient" element={<PageErrorBoundary><Suspense fallback={<div className="page-loading" />}><PatientView /></Suspense></PageErrorBoundary>} />
 
             {/* Ambulance routes — ambulance sidebar */}
             <Route path="/ambulance/*" element={<AmbulanceLayout />} />
