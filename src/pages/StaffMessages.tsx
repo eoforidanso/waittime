@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  collection, doc, onSnapshot, addDoc, updateDoc, deleteField,
+  collection, doc, onSnapshot, addDoc, deleteField,
   orderBy, query, setDoc, limit,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -143,19 +143,32 @@ export default function StaffMessages() {
   // Subscribe to typing indicators for active chat
   useEffect(() => {
     if (!user || !activeChatId) return;
+    let latestData: Record<string, { name: string; ts: number }> = {};
+
     const unsub = onSnapshot(doc(db, 'staffTyping', activeChatId), snap => {
-      if (!snap.exists()) { setTypingUsers([]); return; }
-      const data = snap.data() as Record<string, { name: string; ts: number }>;
+      latestData = snap.exists() ? (snap.data() as Record<string, { name: string; ts: number }>) : {};
       const now = Date.now();
-      const active = Object.entries(data)
+      const active = Object.entries(latestData)
         .filter(([uid, v]) => uid !== user.uid && v.ts > now - 5000)
         .map(([, v]) => v.name);
       setTypingUsers(active);
     });
+
+    // Re-check every 2s to expire stale typing indicators (Firestore doesn't push updates on silence)
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const active = Object.entries(latestData)
+        .filter(([uid, v]) => uid !== user.uid && v.ts > now - 5000)
+        .map(([, v]) => v.name);
+      setTypingUsers(active);
+    }, 2000);
+
     // Clear own typing indicator when switching chats
     return () => {
       unsub();
-      updateDoc(doc(db, 'staffTyping', activeChatId), { [user.uid]: deleteField() }).catch(() => {});
+      clearInterval(interval);
+      // Use setDoc with deleteField — safer than updateDoc on possibly non-existent doc
+      setDoc(doc(db, 'staffTyping', activeChatId), { [user.uid]: deleteField() }, { merge: true }).catch(() => {});
       if (typingTimeout.current) clearTimeout(typingTimeout.current);
     };
   }, [user, activeChatId]);
@@ -199,7 +212,7 @@ export default function StaffMessages() {
       }, { merge: true }).catch(() => {});
       if (typingTimeout.current) clearTimeout(typingTimeout.current);
       typingTimeout.current = setTimeout(() => {
-        updateDoc(doc(db, 'staffTyping', activeChatId), { [user.uid]: deleteField() }).catch(() => {});
+        setDoc(doc(db, 'staffTyping', activeChatId), { [user.uid]: deleteField() }, { merge: true }).catch(() => {});
       }, 3000);
     }
   };
@@ -209,7 +222,7 @@ export default function StaffMessages() {
     setSending(true);
     // Clear typing immediately
     if (typingTimeout.current) clearTimeout(typingTimeout.current);
-    updateDoc(doc(db, 'staffTyping', activeChatId), { [user.uid]: deleteField() }).catch(() => {});
+    setDoc(doc(db, 'staffTyping', activeChatId), { [user.uid]: deleteField() }, { merge: true }).catch(() => {});
 
     const msgData: Omit<Message, 'id'> = {
       fromUid: user.uid,
@@ -264,9 +277,9 @@ export default function StaffMessages() {
     return ts > 0 && (!lastRead[chatId] || ts > lastRead[chatId]);
   };
 
-  const totalUnread = [
+  const totalUnread = !user ? 0 : [
     ...GROUP_CHATS.map(g => g.id),
-    ...otherStaff.map(s => getChatId(user!.uid, s.uid)),
+    ...otherStaff.map(s => getChatId(user.uid, s.uid)),
   ].filter(id => isUnread(id)).length;
 
   const activeGroup = GROUP_CHATS.find(g => g.id === activeChatId);
@@ -333,8 +346,8 @@ export default function StaffMessages() {
 
           {otherStaff.length > 0 && <div className="messages-list-divider">Direct Messages</div>}
 
-          {otherStaff.map(s => {
-            const cid = getChatId(user!.uid, s.uid);
+          {user && otherStaff.map(s => {
+            const cid = getChatId(user.uid, s.uid);
             return (
               <button
                 key={cid}
