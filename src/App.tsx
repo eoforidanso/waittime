@@ -1,8 +1,29 @@
-import { useState, useCallback, useEffect, lazy, Suspense, useRef } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense, useRef, Component, type ReactNode, type ErrorInfo } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { QueueProvider } from './context/QueueContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { FeatureFlagsProvider, useFeatureFlags } from './context/FeatureFlagsContext';
+
+/** Catches render errors in any child page so the sidebar stays visible */
+class PageErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  componentDidCatch(_err: Error, _info: ErrorInfo) {}
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+          <p style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Something went wrong loading this page.</p>
+          <button
+            style={{ padding: '0.4rem 1rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}
+            onClick={() => this.setState({ error: null })}
+          >Try again</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 /** Redirects to / if the given feature flag is off */
 function FeatureRoute({ flag, children }: { flag: keyof ReturnType<typeof useFeatureFlags>['flags']; children: React.ReactNode }) {
@@ -107,6 +128,7 @@ function StaffLayout() {
         <div className={`mobile-overlay ${sidebarOpen ? 'open' : ''}`} onClick={closeSidebar} />
         <Sidebar mode="staff" className={sidebarOpen ? 'open' : ''} onNavClick={closeSidebar} />
         <main className="main-content page-enter" key={location.pathname}>
+          <PageErrorBoundary>
           <Suspense fallback={<div className="page-loading" />}>
             <Routes>
               <Route path="/" element={<Dashboard />} />
@@ -129,6 +151,7 @@ function StaffLayout() {
               <Route path="/messages" element={<StaffMessages />} />
             </Routes>
           </Suspense>
+          </PageErrorBoundary>
         </main>
         <CommandPalette />
         <MessageNotifier />

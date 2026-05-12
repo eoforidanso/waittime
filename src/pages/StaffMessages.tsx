@@ -355,7 +355,7 @@ export default function StaffMessages() {
                 onClick={() => setActiveChatId(cid)}
               >
                 <div className="messages-chat-avatar">
-                  {s.displayName.charAt(0).toUpperCase()}
+                  {(s.displayName ?? '?').charAt(0).toUpperCase()}
                 </div>
                 <div className="messages-chat-info">
                   <div className="messages-chat-name">{s.displayName}</div>
@@ -379,7 +379,7 @@ export default function StaffMessages() {
             className="messages-header-avatar"
             style={activeGroup ? { background: `${activeGroup.color}22`, color: activeGroup.color } : {}}
           >
-            {activeGroup ? <activeGroup.icon size={18} /> : activeChatLabel.charAt(0).toUpperCase()}
+            {activeGroup ? <activeGroup.icon size={18} /> : (activeChatLabel ?? '?').charAt(0).toUpperCase()}
           </div>
           <div style={{ flex: 1 }}>
             <div className="messages-header-name">{activeChatLabel}</div>
