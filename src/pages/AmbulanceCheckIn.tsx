@@ -281,7 +281,7 @@ export default function AmbulanceCheckIn() {
               list="cc-list"
               value={form.chiefComplaint}
               onChange={e => setForm(f => ({ ...f, chiefComplaint: e.target.value }))}
-              placeholder="Select or type complaintâ€¦"
+              placeholder="Select or type complaint…"
               required
               autoComplete="off"
             />
@@ -290,7 +290,7 @@ export default function AmbulanceCheckIn() {
             </datalist>
           </div>
 
-          {/* Priority â€” critical and emergent only */}
+          {/* Priority — critical and emergent only */}
           <div className="amb-row">
             <div className="amb-field">
               <label>Triage Priority</label>
@@ -330,7 +330,7 @@ export default function AmbulanceCheckIn() {
             <textarea
               value={form.notes}
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-              placeholder="Additional details for ER staffâ€¦"
+              placeholder="Additional details for ER staff…"
               rows={2}
             />
           </div>
@@ -346,7 +346,7 @@ export default function AmbulanceCheckIn() {
               <div className="gps-active-block">
                 <div className="gps-active">
                   <span className="gps-dot" />
-                  GPS Active â€” transmitting to ER
+                  GPS Active — transmitting to ER
                   {coords && <span className="gps-coords">{coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}</span>}
                 </div>
                 <button type="button" className="btn-toggle-minimap" onClick={() => setShowMiniMap(v => !v)}>
@@ -368,7 +368,7 @@ export default function AmbulanceCheckIn() {
               </div>
             )}
             {gpsStatus === 'error' && (
-              <div className="gps-error">GPS unavailable â€” location won't be shared</div>
+              <div className="gps-error">GPS unavailable &mdash; location won't be shared</div>
             )}
           </div>
 
@@ -432,7 +432,7 @@ export default function AmbulanceCheckIn() {
                       now={now}
                       mini
                       singlePos={[coords.lat, coords.lng]}
-                      singleLabel={`${activeAmb.unitNumber} â€" ${activeAmb.patientName}`}
+                      singleLabel={`${activeAmb.unitNumber} — ${activeAmb.patientName}`}
                     />
                   </div>
                 )}
