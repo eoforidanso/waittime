@@ -88,7 +88,7 @@ export default function PatientRegistry() {
         dob,
         age,
         updatedAt: Date.now(),
-        updatedBy: staffProfile.displayName,
+        updatedBy: staffProfile.displayName || staffProfile.email || 'Unknown',
       } satisfies RegistryEntry);
       toast.success('Registry updated', `${firstInitial}. ${lastName} — DOB ${dob}`);
       setEditing(null);
