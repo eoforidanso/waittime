@@ -1336,6 +1336,24 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   font-family: 'Consolas', monospace;
 }
 
+.amb-demo-btn {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  margin-top: 0.5rem;
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+  border: 1px dashed rgba(251, 191, 36, 0.4);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.amb-demo-btn:hover {
+  background: rgba(251, 191, 36, 0.22);
+  border-color: rgba(251, 191, 36, 0.7);
+}
+
 /* ── Ambulance incoming alert stack (ER Queue Management) ── */
 @keyframes amb-slide-in {
   from { opacity: 0; transform: translateY(-14px); }

@@ -24,6 +24,11 @@ export default function AmbulanceLogin({ onLogin }: AmbulanceLoginProps) {
     }
   };
 
+  const handleDemoLogin = () => {
+    sessionStorage.setItem('mediq_amb_auth', '1');
+    onLogin();
+  };
+
   return (
     <div className="amb-login-page">
       <div className="amb-login-card">
@@ -68,8 +73,12 @@ export default function AmbulanceLogin({ onLogin }: AmbulanceLoginProps) {
         </form>
 
         <div className="amb-login-hint">
-          <small>Demo — <code>ems_dispatch</code> / <code>mediq2026</code></small>
+          <small>Demo credentials — <code>ems_dispatch</code> / <code>mediq2026</code></small>
         </div>
+
+        <button type="button" className="amb-demo-btn" onClick={handleDemoLogin}>
+          ⚡ Quick Demo Access
+        </button>
 
         <button className="portal-back-btn" onClick={() => nav('/login')}>
           <ArrowLeft size={14} /> Back to Portal
