@@ -136,6 +136,8 @@ export default function Analytics() {
       await loadRecords();
       toast.success('End of day complete', `${state.tickets.length} records archived`);
       setConfirmEndOfDay(false);
+    } catch {
+      toast.error('End of day failed', 'Could not archive records — check your connection and try again.');
     } finally {
       setSaving(false);
     }

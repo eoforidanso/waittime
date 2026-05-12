@@ -11,12 +11,18 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, { error: Erro
   componentDidCatch(_err: Error, _info: ErrorInfo) {}
   render() {
     if (this.state.error) {
+      // ChunkLoadError means the lazy bundle failed to fetch — a re-render won't
+      // help since the failed module stays cached. Reload the page instead.
+      const isChunkError = this.state.error instanceof Error &&
+        (this.state.error.name === 'ChunkLoadError' ||
+         this.state.error.message.includes('Loading chunk') ||
+         this.state.error.message.includes('Failed to fetch dynamically'));
       return (
         <div style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>
           <p style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Something went wrong loading this page.</p>
           <button
             style={{ padding: '0.4rem 1rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}
-            onClick={() => this.setState({ error: null })}
+            onClick={() => isChunkError ? window.location.reload() : this.setState({ error: null })}
           >Try again</button>
         </div>
       );
@@ -220,6 +226,12 @@ function AmbulanceLayout() {
   );
 }
 
+/** Uses useNavigate (inside BrowserRouter) so login redirects without a full reload */
+function StaffLoginRoute() {
+  const nav = useNavigate();
+  return <StaffLogin onLogin={() => nav('/', { replace: true })} />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -242,7 +254,7 @@ function AppBridge() {
           <Routes>
             {/* Public routes — no sidebar */}
             <Route path="/login" element={<LoginPortal />} />
-            <Route path="/staff-login" element={<StaffLogin onLogin={() => { window.location.href = '/'; }} />} />
+            <Route path="/staff-login" element={<StaffLoginRoute />} />
             <Route path="/display" element={<PageErrorBoundary><DisplayBoard /></PageErrorBoundary>} />
             <Route path="/patient" element={<PageErrorBoundary><Suspense fallback={<div className="page-loading" />}><PatientView /></Suspense></PageErrorBoundary>} />
 

@@ -38,6 +38,8 @@ export default function DisplayBoard() {
     const ticket = nowServing.find(t => t.id === flash);
     if (!ticket) return;
     if ('speechSynthesis' in window) {
+      // Cancel any queued announcements so stale tickets don't play out of order
+      window.speechSynthesis.cancel();
       const msg = new SpeechSynthesisUtterance(
         `Now serving ticket ${ticket.ticketNumber.replace('-', ' ')} at bay ${ticket.counterNumber}. ${ticket.patientName}, please proceed.`
       );
