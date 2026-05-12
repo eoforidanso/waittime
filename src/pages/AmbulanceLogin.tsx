@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { signInAnonymously } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 import { Truck, Lock, User, AlertCircle, ArrowLeft } from 'lucide-react';
 
 const CREDENTIALS = { username: 'ems_dispatch', password: 'mediq2026' };
@@ -8,24 +10,35 @@ interface AmbulanceLoginProps {
   onLogin: () => void;
 }
 
+async function doAmbulanceSignIn() {
+  sessionStorage.setItem('mediq_amb_auth', '1');
+  // Sign in anonymously so Firestore rules (request.auth != null) pass
+  if (!auth.currentUser) {
+    await signInAnonymously(auth).catch(() => {/* proceed anyway — offline */});
+  }
+}
+
 export default function AmbulanceLogin({ onLogin }: AmbulanceLoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const nav = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
-      sessionStorage.setItem('mediq_amb_auth', '1');
+      setLoading(true);
+      await doAmbulanceSignIn();
       onLogin();
     } else {
       setError('Invalid credentials. Access denied.');
     }
   };
 
-  const handleDemoLogin = () => {
-    sessionStorage.setItem('mediq_amb_auth', '1');
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    await doAmbulanceSignIn();
     onLogin();
   };
 
@@ -67,8 +80,8 @@ export default function AmbulanceLogin({ onLogin }: AmbulanceLoginProps) {
             </div>
           )}
 
-          <button type="submit" className="amb-login-btn">
-            <Lock size={16} /> Sign In
+          <button type="submit" className="amb-login-btn" disabled={loading}>
+            <Lock size={16} /> {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
 
@@ -76,8 +89,8 @@ export default function AmbulanceLogin({ onLogin }: AmbulanceLoginProps) {
           <small>Demo credentials — <code>ems_dispatch</code> / <code>mediq2026</code></small>
         </div>
 
-        <button type="button" className="amb-demo-btn" onClick={handleDemoLogin}>
-          ⚡ Quick Demo Access
+        <button type="button" className="amb-demo-btn" onClick={handleDemoLogin} disabled={loading}>
+          ⚡ {loading ? 'Connecting…' : 'Quick Demo Access'}
         </button>
 
         <button className="portal-back-btn" onClick={() => nav('/login')}>
