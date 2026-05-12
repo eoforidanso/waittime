@@ -60,6 +60,33 @@ export function playDispatchAlert(): () => void {
   }
 }
 
+/**
+ * Plays the ambulance siren in a continuous loop until the returned stop() is called.
+ * Each 30-second cycle restarts automatically.
+ */
+export function playLoopingSiren(): () => void {
+  let stopped = false;
+  let stopCurrent: (() => void) | null = null;
+  let nextTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function startCycle() {
+    if (stopped) return;
+    stopCurrent = playDispatchAlert();
+    // 30s cycle — restart just before auto-close so there's no gap
+    nextTimer = setTimeout(() => {
+      if (!stopped) startCycle();
+    }, 29500);
+  }
+
+  startCycle();
+
+  return () => {
+    stopped = true;
+    if (nextTimer !== null) clearTimeout(nextTimer);
+    stopCurrent?.();
+  };
+}
+
 /** Softer single confirmation beep (used on the check-in side) */
 export function playConfirmBeep() {
   try {

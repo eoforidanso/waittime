@@ -34,6 +34,7 @@ function FeatureRoute({ flag, children }: { flag: keyof ReturnType<typeof useFea
 import Sidebar from './components/Sidebar';
 import StaffGuard from './components/StaffGuard';
 import AmbulanceGuard from './components/AmbulanceGuard';
+import AmbulanceSirenAlert from './components/AmbulanceSirenAlert';
 
 // Eagerly-loaded (needed on first paint or very small)
 import LoginPortal from './pages/LoginPortal';
@@ -157,6 +158,7 @@ function StaffLayout() {
         </main>
         <CommandPalette />
         <MessageNotifier />
+        <AmbulanceSirenAlert />
         {showKbdHelp && (
           <div className="kbd-help-panel" onClick={() => setShowKbdHelp(false)}>
             <h4>Keyboard Shortcuts</h4>

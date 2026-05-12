@@ -5,7 +5,6 @@ import type { Priority, ServiceType } from '../types';
 import { TRIAGE_COLORS } from '../types';
 import { Truck, MapPin, Send, CheckCircle, XCircle, Cross, Navigation2, ChevronDown, ChevronUp } from 'lucide-react';
 import AmbulanceMap from '../components/AmbulanceMap';
-import { playDispatchAlert } from '../utils/alertSound';
 
 const HOSPITAL_LS_KEY = 'mediq_hospital_pos';
 const DEFAULT_HOSPITAL: [number, number] = [5.6037, -0.1870];
@@ -131,7 +130,6 @@ export default function AmbulanceCheckIn() {
       const newest = state.ambulances[state.ambulances.length - 1];
       setSubmitted(newest.id);
       toast.warn('Ambulance dispatched', `${newest.unitNumber} — ${newest.patientName} — ETA ${newest.eta}m`);
-      playDispatchAlert();
 
       // Auto-create a pre-alert triage ticket for critical/emergent patients
       if (newest.priority === 'critical' || newest.priority === 'emergent') {

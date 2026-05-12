@@ -1,13 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useQueue } from '../context/QueueContext';
 import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmDialog';
 import type { ServiceType, TicketStatus, Priority } from '../types';
 import { SERVICE_TYPES, SERVICE_COLORS, TRIAGE_COLORS, TICKET_STATUS_LABELS, TICKET_STATUS_COLORS } from '../types';
-import type { Ambulance } from '../types';
 import { WaitTimer, formatTriageTime } from '../utils/waitTime';
 import { BreachCountdown } from '../utils/breachTimer';
-import { playDispatchAlert } from '../utils/alertSound';
 import {
   MonitorPlay,
   CheckCircle,
@@ -15,7 +13,6 @@ import {
   ArrowRightLeft,
   Bell,
   Skull,
-  Siren,
   X,
   BedDouble,
   ChevronDown,
@@ -36,41 +33,6 @@ export default function QueueManagement() {
   const [statusTarget, setStatusTarget] = useState<string | null>(null); // ticketId for status picker
   const [inpatientModal, setInpatientModal] = useState<{ ticketId: string; show: boolean }>({ ticketId: '', show: false });
   const [selectedInpatientBed, setSelectedInpatientBed] = useState<{ unitId: string; bedId: string } | null>(null);
-  const [ambAlerts, setAmbAlerts] = useState<Ambulance[]>([]);
-  const stopSirenRef = useRef<(() => void) | null>(null);
-  const prevEnRouteRef = useRef<string[]>(
-    state.ambulances.filter(a => a.status === 'en-route').map(a => a.id)
-  );
-
-  // Detect newly dispatched ambulances and fire alert
-  useEffect(() => {
-    const currentEnRoute = state.ambulances.filter(a => a.status === 'en-route');
-    const newOnes = currentEnRoute.filter(a => !prevEnRouteRef.current.includes(a.id));
-    if (newOnes.length > 0) {
-      setAmbAlerts(prev => [...prev, ...newOnes]);
-      // Stop any existing siren and start fresh
-      stopSirenRef.current?.();
-      stopSirenRef.current = playDispatchAlert();
-    }
-    prevEnRouteRef.current = currentEnRoute.map(a => a.id);
-  }, [state.ambulances]);
-
-  const dismissAlert = (id: string) => {
-    setAmbAlerts(prev => {
-      const remaining = prev.filter(a => a.id !== id);
-      if (remaining.length === 0) {
-        stopSirenRef.current?.();
-        stopSirenRef.current = null;
-      }
-      return remaining;
-    });
-  };
-
-  const dismissAll = () => {
-    stopSirenRef.current?.();
-    stopSirenRef.current = null;
-    setAmbAlerts([]);
-  };
 
   const activeCounters = state.counters.filter(c => c.isActive);
   const counter = activeCounters.find(c => c.id === selectedCounter);
@@ -105,34 +67,6 @@ export default function QueueManagement() {
         <h1><MonitorPlay size={28} /> ER Queue Management</h1>
         <p>Manage patients from your bay</p>
       </div>
-
-      {/* Ambulance incoming alerts */}
-      {ambAlerts.length > 0 && (
-        <div className="amb-alert-stack">
-          <div className="amb-alert-stack-header">
-            <span><Siren size={16} /> {ambAlerts.length} Ambulance{ambAlerts.length > 1 ? 's' : ''} Incoming</span>
-            <button className="amb-dismiss-all" onClick={dismissAll}><X size={14} /> Dismiss All</button>
-          </div>
-          {ambAlerts.map(a => (
-            <div key={a.id} className={`amb-alert-card priority-${a.priority}`}>
-              <div className="amb-alert-siren"><Siren size={22} /></div>
-              <div className="amb-alert-body">
-                <div className="amb-alert-title">
-                  <span className="amb-unit">{a.unitNumber}</span>
-                  <span className="amb-patient">{a.patientName}{a.sex ? ` (${a.sex[0].toUpperCase()})` : ''}{a.age ? `, ${a.age} yrs` : ''}</span>
-                </div>
-                <div className="amb-alert-detail">
-                  <span className="amb-complaint">{a.chiefComplaint}</span>
-                  <span className="amb-eta">ETA {a.eta} min</span>
-                  <span className="amb-priority-tag" style={{ background: TRIAGE_COLORS[a.priority] }}>{a.priority.toUpperCase()}</span>
-                </div>
-                {a.notes && <div className="amb-alert-notes">{a.notes}</div>}
-              </div>
-              <button className="amb-dismiss-btn" onClick={() => dismissAlert(a.id)} title="Dismiss"><X size={16} /></button>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Counter selector */}
       <div className="counter-selector">

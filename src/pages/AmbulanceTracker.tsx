@@ -3,7 +3,6 @@ import { useQueue } from '../context/QueueContext';
 import { TRIAGE_COLORS, SERVICE_TYPES, SERVICE_COLORS } from '../types';
 import type { ServiceType } from '../types';
 import AmbulanceMap from '../components/AmbulanceMap';
-import { playDispatchAlert } from '../utils/alertSound';
 import { LiveAvgWait, getElapsedMinutes } from '../utils/waitTime';
 import {
   Truck,
@@ -70,7 +69,6 @@ export default function AmbulanceTracker() {
     const currentEnRoute = state.ambulances.filter(a => a.status === 'en-route');
     if (currentEnRoute.length > prevAmbCountRef.current) {
       const newest = currentEnRoute[currentEnRoute.length - 1];
-      playDispatchAlert();
       const id = Date.now();
       setToasts(t => [...t, {
         id,
