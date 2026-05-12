@@ -1,45 +1,79 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInAnonymously } from 'firebase/auth';
-import { auth } from '../lib/firebase';
-import { Truck, Lock, User, AlertCircle, ArrowLeft } from 'lucide-react';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
+import { Truck, Lock, Mail, AlertCircle, ArrowLeft } from 'lucide-react';
 
-const CREDENTIALS = { username: 'ems_dispatch', password: 'mediq2026' };
+// Fixed EMS account — auto-provisioned in Firebase on first use
+const EMS_EMAIL    = 'ems.dispatch@mediqgh.com';
+const EMS_PASSWORD = 'MediQ-EMS-2026!';
 
 interface AmbulanceLoginProps {
   onLogin: () => void;
 }
 
-async function doAmbulanceSignIn() {
-  sessionStorage.setItem('mediq_amb_auth', '1');
-  // Sign in anonymously so Firestore rules (request.auth != null) pass
-  if (!auth.currentUser) {
-    await signInAnonymously(auth).catch(() => {/* proceed anyway — offline */});
+async function signInEMS(email: string, password: string) {
+  let cred;
+  try {
+    cred = await signInWithEmailAndPassword(auth, email, password);
+  } catch (err: unknown) {
+    // Auto-provision the EMS account on first use
+    if ((err as { code?: string }).code === 'auth/user-not-found' ||
+        (err as { code?: string }).code === 'auth/invalid-credential') {
+      cred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(cred.user, { displayName: 'EMS Dispatch' });
+      const profileDoc = doc(db, 'staff', cred.user.uid);
+      const snap = await getDoc(profileDoc);
+      if (!snap.exists()) {
+        await setDoc(profileDoc, {
+          uid: cred.user.uid,
+          email,
+          displayName: 'EMS Dispatch',
+          role: 'ems',
+          createdAt: new Date().toISOString(),
+        });
+      }
+    } else {
+      throw err;
+    }
   }
+  sessionStorage.setItem('mediq_amb_auth', '1');
+  return cred;
 }
 
 export default function AmbulanceLogin({ onLogin }: AmbulanceLoginProps) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
   const nav = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
-      setLoading(true);
-      await doAmbulanceSignIn();
+    setLoading(true);
+    setError('');
+    try {
+      await signInEMS(email.trim(), password);
       onLogin();
-    } else {
+    } catch {
       setError('Invalid credentials. Access denied.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDemoLogin = async () => {
     setLoading(true);
-    await doAmbulanceSignIn();
-    onLogin();
+    setError('');
+    try {
+      await signInEMS(EMS_EMAIL, EMS_PASSWORD);
+      onLogin();
+    } catch {
+      setError('Could not connect. Check your internet connection.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,13 +87,13 @@ export default function AmbulanceLogin({ onLogin }: AmbulanceLoginProps) {
 
         <form className="amb-login-form" onSubmit={handleSubmit}>
           <div className="amb-login-field">
-            <User size={16} className="amb-field-icon" />
+            <Mail size={16} className="amb-field-icon" />
             <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={e => { setUsername(e.target.value); setError(''); }}
-              autoComplete="username"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => { setEmail(e.target.value); setError(''); }}
+              autoComplete="email"
               autoFocus
             />
           </div>
@@ -86,7 +120,7 @@ export default function AmbulanceLogin({ onLogin }: AmbulanceLoginProps) {
         </form>
 
         <div className="amb-login-hint">
-          <small>Demo credentials — <code>ems_dispatch</code> / <code>mediq2026</code></small>
+          <small>EMS account — <code>{EMS_EMAIL}</code></small>
         </div>
 
         <button type="button" className="amb-demo-btn" onClick={handleDemoLogin} disabled={loading}>
@@ -100,3 +134,4 @@ export default function AmbulanceLogin({ onLogin }: AmbulanceLoginProps) {
     </div>
   );
 }
+
