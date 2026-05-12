@@ -22,6 +22,7 @@ interface QueueState {
   escalationLog: EscalationEntry[];
   shifts: ShiftEntry[];
   inpatientUnits: InpatientUnit[];
+  erDiversionStatus: 'open' | 'divert';
 }
 
 type QueueAction =
@@ -47,6 +48,10 @@ type QueueAction =
   | { type: 'AMBULANCE_ARRIVED'; payload: { ambulanceId: string } }
   | { type: 'CANCEL_AMBULANCE'; payload: { ambulanceId: string } }
   | { type: 'SYNC_STATE'; payload: QueueState }
+  | { type: 'SET_DIVERSION_STATUS'; payload: { status: 'open' | 'divert' } }
+  | { type: 'HOLD_BED_FOR_AMBULANCE'; payload: { ambulanceId: string; counterId: number } }
+  | { type: 'RELEASE_BED_HOLD'; payload: { ambulanceId: string } }
+  | { type: 'FLAG_GATE_ALERT'; payload: { ambulanceId: string } }
   | { type: 'ADD_HANDOVER_NOTE'; payload: { area: HandoverNote['area']; author: string; content: string; shift: HandoverNote['shift'] } }
   | { type: 'REMOVE_HANDOVER_NOTE'; payload: { noteId: string } }
   | { type: 'TOGGLE_HANDOVER_PIN'; payload: { noteId: string } }
@@ -379,6 +384,7 @@ const initialState: QueueState = {
   escalationLog: [],
   shifts: [],
   inpatientUnits: initialInpatientUnits,
+  erDiversionStatus: 'open',
 };
 
 function generateTicketNumber(service: ServiceType, counters: Record<string, number>): { number: string; updatedCounters: Record<string, number> } {
@@ -703,12 +709,64 @@ function queueReducer(state: QueueState, action: QueueAction): QueueState {
               : t
           )
         : state.tickets;
+      // Release any bed hold
+      const holdId = amb?.bedHoldCounterId;
+      const countersAfterRelease = holdId
+        ? state.counters.map(c => c.id === holdId ? { ...c, reservedBeds: Math.max(0, (c.reservedBeds ?? 0) - 1) } : c)
+        : state.counters;
       return {
         ...state,
         ambulances: state.ambulances.map(a =>
-          a.id === ambulanceId ? { ...a, status: 'cancelled' as const } : a
+          a.id === ambulanceId ? { ...a, status: 'cancelled' as const, bedHoldCounterId: undefined } : a
         ),
         tickets: updatedTickets,
+        counters: countersAfterRelease,
+      };
+    }
+
+    case 'SET_DIVERSION_STATUS':
+      return { ...state, erDiversionStatus: action.payload.status };
+
+    case 'HOLD_BED_FOR_AMBULANCE': {
+      const { ambulanceId, counterId } = action.payload;
+      const existingHoldId = state.ambulances.find(a => a.id === ambulanceId)?.bedHoldCounterId;
+      // Don't double-count if same bay re-selected
+      if (existingHoldId === counterId) return state;
+      const updCounters = state.counters.map(c => {
+        if (c.id === counterId) return { ...c, reservedBeds: (c.reservedBeds ?? 0) + 1 };
+        if (c.id === existingHoldId) return { ...c, reservedBeds: Math.max(0, (c.reservedBeds ?? 0) - 1) };
+        return c;
+      });
+      return {
+        ...state,
+        counters: updCounters,
+        ambulances: state.ambulances.map(a =>
+          a.id === ambulanceId ? { ...a, bedHoldCounterId: counterId } : a
+        ),
+      };
+    }
+
+    case 'RELEASE_BED_HOLD': {
+      const { ambulanceId } = action.payload;
+      const holdCounterId = state.ambulances.find(a => a.id === ambulanceId)?.bedHoldCounterId;
+      return {
+        ...state,
+        counters: holdCounterId
+          ? state.counters.map(c => c.id === holdCounterId ? { ...c, reservedBeds: Math.max(0, (c.reservedBeds ?? 0) - 1) } : c)
+          : state.counters,
+        ambulances: state.ambulances.map(a =>
+          a.id === ambulanceId ? { ...a, bedHoldCounterId: undefined } : a
+        ),
+      };
+    }
+
+    case 'FLAG_GATE_ALERT': {
+      const { ambulanceId } = action.payload;
+      return {
+        ...state,
+        ambulances: state.ambulances.map(a =>
+          a.id === ambulanceId ? { ...a, gateAlertFired: true } : a
+        ),
       };
     }
 
@@ -952,6 +1010,10 @@ interface QueueContextType {
   deleteInpatientUnit: (unitId: string) => void;
   addInpatientBeds: (unitId: string, count: number) => void;
   editTicket: (ticketId: string, patientName: string, priority: Priority, age?: number, chiefComplaint?: string, notes?: string) => void;
+  setDiversionStatus: (status: 'open' | 'divert') => void;
+  holdBedForAmbulance: (ambulanceId: string, counterId: number) => void;
+  releaseBedHold: (ambulanceId: string) => void;
+  flagGateAlert: (ambulanceId: string) => void;
 }
 
 const QueueContext = createContext<QueueContextType | null>(null);
@@ -1293,12 +1355,35 @@ export function QueueProvider({ children, auditUser = null }: { children: ReactN
     logAudit(auditUserRef.current, 'Ticket Edited', `${patientName}${age ? `, ${age}y` : ''} | ${priority}`);
   }, []);
 
+  const setDiversionStatus = useCallback((status: 'open' | 'divert') => {
+    dispatch({ type: 'SET_DIVERSION_STATUS', payload: { status } });
+    logAudit(auditUserRef.current, 'Amissah Protocol', `ER diversion status set to ${status.toUpperCase()}`);
+  }, []);
+
+  const holdBedForAmbulance = useCallback((ambulanceId: string, counterId: number) => {
+    const a = state.ambulances.find(x => x.id === ambulanceId);
+    const c = state.counters.find(x => x.id === counterId);
+    dispatch({ type: 'HOLD_BED_FOR_AMBULANCE', payload: { ambulanceId, counterId } });
+    if (a && c) logAudit(auditUserRef.current, 'Bed Reserved', `${c.name} reserved for ${a.patientName} (${a.unitNumber})`);
+  }, [state.ambulances, state.counters]);
+
+  const releaseBedHold = useCallback((ambulanceId: string) => {
+    const a = state.ambulances.find(x => x.id === ambulanceId);
+    dispatch({ type: 'RELEASE_BED_HOLD', payload: { ambulanceId } });
+    if (a) logAudit(auditUserRef.current, 'Bed Hold Released', `Hold released for ${a.patientName} (${a.unitNumber})`);
+  }, [state.ambulances]);
+
+  const flagGateAlert = useCallback((ambulanceId: string) => {
+    dispatch({ type: 'FLAG_GATE_ALERT', payload: { ambulanceId } });
+  }, []);
+
   // Derive bedsOccupied from actual serving ticket counts so it always reflects real patient numbers
   const derivedState = useMemo(() => ({
     ...state,
     counters: state.counters.map(c => ({
       ...c,
       bedsOccupied: state.tickets.filter(t => t.status === 'serving' && t.counterNumber === c.id).length,
+      // preserve reservedBeds from raw state
     })),
   }), [state]);
 
@@ -1345,6 +1430,10 @@ export function QueueProvider({ children, auditUser = null }: { children: ReactN
       deleteInpatientUnit,
       addInpatientBeds,
       editTicket,
+      setDiversionStatus,
+      holdBedForAmbulance,
+      releaseBedHold,
+      flagGateAlert,
     }}>
       {children}
     </QueueContext.Provider>

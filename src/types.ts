@@ -72,6 +72,7 @@ export interface Counter {
   currentTicket?: Ticket;
   beds: number;
   bedsOccupied: number;
+  reservedBeds?: number;
 }
 
 export interface QueueStats {
@@ -144,6 +145,8 @@ export interface Ambulance {
   lng?: number;
   lastLocationUpdate?: Date;
   notes?: string;
+  bedHoldCounterId?: number;
+  gateAlertFired?: boolean;
 }
 
 // ── NHS target times (minutes from triage) ──────────────────────────────────

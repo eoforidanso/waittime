@@ -12438,3 +12438,306 @@ body {
 }
 
 
+
+/* ══════════════════════════════════════════════════════════════════
+   Amissah Protocol — Diversion, Bed Hold, Gate Timer
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── ER Diversion Banner (AmbulanceTracker) ── */
+.divert-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #7f1d1d, #991b1b);
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+  padding: 14px 20px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  box-shadow: 0 0 20px rgba(239,68,68,.3);
+}
+.divert-banner strong { color: #fff; font-size: 15px; }
+.divert-banner-close {
+  margin-left: auto;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.25);
+  color: #fff;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.divert-banner-close:hover { background: rgba(255,255,255,.2); }
+
+/* ── Amissah Protocol Toggle Button (header) ── */
+.btn-diversion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  letter-spacing: .5px;
+  transition: all .2s;
+}
+.btn-diversion.open {
+  background: rgba(16,185,129,.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16,185,129,.3);
+}
+.btn-diversion.open:hover { background: rgba(16,185,129,.25); }
+.btn-diversion.diverted {
+  background: rgba(239,68,68,.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239,68,68,.4);
+  animation: divert-pulse 1.8s ease-in-out infinite;
+}
+@keyframes divert-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+}
+
+/* ── Reserved beds stat pill ── */
+.tracker-stat-pill.reserved {
+  background: rgba(99,102,241,.15);
+  border-color: rgba(99,102,241,.35);
+  color: #a5b4fc;
+}
+
+/* ── Bed hold status on en-route card ── */
+.amb-bed-hold-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 7px 10px;
+  background: rgba(16,185,129,.12);
+  border: 1px solid rgba(16,185,129,.3);
+  border-radius: 7px;
+  font-size: 13px;
+  color: #6ee7b7;
+}
+.btn-release-hold {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(239,68,68,.15);
+  border: 1px solid rgba(239,68,68,.3);
+  color: #fca5a5;
+  border-radius: 5px;
+  padding: 3px 9px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.btn-release-hold:hover { background: rgba(239,68,68,.25); }
+
+/* ── Reserve Bed picker ── */
+.bed-hold-picker {
+  margin-top: 8px;
+  padding: 10px;
+  background: rgba(30,41,59,.8);
+  border: 1px solid rgba(99,102,241,.3);
+  border-radius: 8px;
+}
+.bed-hold-picker-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+.bed-hold-picker-bays {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.bed-hold-bay-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 7px 6px;
+  background: rgba(51,65,85,.7);
+  border: 1px solid rgba(148,163,184,.2);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.bed-hold-bay-btn:not(.full):hover { background: rgba(99,102,241,.25); border-color: rgba(99,102,241,.5); }
+.bed-hold-bay-btn.full { opacity: .4; cursor: not-allowed; }
+.bhb-name { font-size: 12px; font-weight: 600; color: #e2e8f0; }
+.bhb-free { font-size: 11px; color: #94a3b8; }
+.btn-hold-cancel {
+  font-size: 12px;
+  color: #64748b;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.btn-hold-cancel:hover { color: #94a3b8; }
+
+/* ── Reserve Bed action button ── */
+.btn-reserve-bed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: rgba(99,102,241,.15);
+  border: 1px solid rgba(99,102,241,.35);
+  color: #a5b4fc;
+  border-radius: 7px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-reserve-bed:hover { background: rgba(99,102,241,.28); }
+
+/* ── Gate timer (Arrived cards) ── */
+.amb-gate-timer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: rgba(51,65,85,.5);
+}
+.amb-gate-timer.overdue {
+  color: #fca5a5;
+  background: rgba(239,68,68,.15);
+  border: 1px solid rgba(239,68,68,.3);
+  font-weight: 600;
+  animation: divert-pulse 1.5s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   AmbulanceCheckIn — Diversion Banner + Bed Availability Panel
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Diversion banner (crew side) */
+.amb-divert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: linear-gradient(135deg, #7f1d1d, #991b1b);
+  border: 1px solid #ef4444;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  color: #fca5a5;
+  box-shadow: 0 0 30px rgba(239,68,68,.35);
+}
+.amb-divert-banner svg { flex-shrink: 0; margin-top: 2px; color: #f87171; }
+.amb-divert-banner strong { display: block; color: #fff; font-size: 16px; margin-bottom: 4px; }
+.amb-divert-banner p { margin: 0; font-size: 13px; line-height: 1.5; }
+
+/* Live bed availability panel (crew side) */
+.amb-bed-panel {
+  background: rgba(15,23,42,.7);
+  border: 1px solid rgba(148,163,184,.15);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.amb-bed-panel.full  { border-color: rgba(239,68,68,.4); background: rgba(127,29,29,.2); }
+.amb-bed-panel.low   { border-color: rgba(245,158,11,.4); background: rgba(78,52,15,.2); }
+.amb-bed-panel.ok    { border-color: rgba(16,185,129,.25); }
+
+.abp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+.abp-badge {
+  margin-left: auto;
+  padding: 2px 9px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+}
+.abp-badge.ok   { background: rgba(16,185,129,.2); color: #6ee7b7; }
+.abp-badge.low  { background: rgba(245,158,11,.2); color: #fcd34d; }
+.abp-badge.full { background: rgba(239,68,68,.2); color: #fca5a5; }
+
+.abp-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.abp-free  { font-size: 28px; font-weight: 700; color: #e2e8f0; }
+.abp-label { font-size: 13px; color: #64748b; }
+.abp-reserved {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #a5b4fc;
+  background: rgba(99,102,241,.1);
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.abp-bar-track {
+  height: 5px;
+  background: rgba(51,65,85,.8);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.abp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+  border-radius: 3px;
+  transition: width .4s ease;
+}
+
+.abp-bays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.abp-bay {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  background: rgba(30,41,59,.8);
+  border: 1px solid rgba(148,163,184,.15);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+.abp-bay.full { background: rgba(127,29,29,.3); border-color: rgba(239,68,68,.3); color: #fca5a5; }
+.abp-bay-name { font-weight: 600; }
+.abp-bay-free { color: #64748b; }
+.abp-bay-held { color: #a5b4fc; }
+
+/* Bed hold notice on submitted ambulance card */
+.amb-bed-hold-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(16,185,129,.12);
+  border: 1px solid rgba(16,185,129,.3);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #6ee7b7;
+  margin-bottom: 10px;
+}

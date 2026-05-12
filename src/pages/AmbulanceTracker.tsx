@@ -4,6 +4,7 @@ import { TRIAGE_COLORS, SERVICE_TYPES, SERVICE_COLORS } from '../types';
 import type { ServiceType } from '../types';
 import AmbulanceMap from '../components/AmbulanceMap';
 import { LiveAvgWait, getElapsedMinutes } from '../utils/waitTime';
+import { useConfirm } from '../components/ConfirmDialog';
 import {
   Truck,
   MapPin,
@@ -18,6 +19,11 @@ import {
   Activity,
   ChevronDown,
   ChevronUp,
+  ShieldAlert,
+  ShieldCheck,
+  Lock,
+  Unlock,
+  Timer,
 } from 'lucide-react';
 
 const DEFAULT_HOSPITAL: [number, number] = [5.6037, -0.1870]; // Accra, Ghana fallback
@@ -32,12 +38,14 @@ function loadHospitalPos(): [number, number] {
 }
 
 export default function AmbulanceTracker() {
-  const { state, ambulanceArrived, cancelAmbulance } = useQueue();
+  const { state, ambulanceArrived, cancelAmbulance, setDiversionStatus, holdBedForAmbulance, releaseBedHold, addEscalation, flagGateAlert } = useQueue();
+  const { confirm, Dialog: ConfirmEl } = useConfirm();
   const [now, setNow] = useState(new Date());
   const [hospitalPos, setHospitalPos] = useState<[number, number]>(loadHospitalPos);
   const [locating, setLocating] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [showERStatus, setShowERStatus] = useState(true);
+  const [bedHoldPickerId, setBedHoldPickerId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<{ id: number; msg: string; priority: string }[]>([]);
   const prevAmbCountRef = useRef(state.ambulances.filter(a => a.status === 'en-route').length);
   const toastTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -95,6 +103,45 @@ export default function AmbulanceTracker() {
     return () => clearInterval(i);
   }, []);
 
+  // ── Gate timer: escalate if ambulance has been "arrived" > 15 min with no check-in ──
+  const GATE_ALERT_MINUTES = 15;
+  useEffect(() => {
+    const check = () => {
+      const nowMs = Date.now();
+      state.ambulances.forEach(amb => {
+        if (amb.status !== 'arrived' || amb.gateAlertFired) return;
+        if (!amb.arrivedAt) return;
+        const waitedMin = (nowMs - new Date(amb.arrivedAt).getTime()) / 60000;
+        if (waitedMin >= GATE_ALERT_MINUTES) {
+          flagGateAlert(amb.id);
+          addEscalation(
+            `⛔ Gate Delay — ${amb.unitNumber}`,
+            `${amb.patientName} (${amb.chiefComplaint}) arrived ${Math.round(waitedMin)} min ago but has not been checked into the ER. Immediate action required.`,
+            'critical',
+            'System (Amissah Protocol)',
+            'All Areas',
+          );
+        }
+      });
+    };
+    check();
+    const interval = setInterval(check, 30_000);
+    return () => clearInterval(interval);
+  }, [state.ambulances, addEscalation, flagGateAlert]);
+
+  const handleDiversionToggle = async () => {
+    const isDivert = state.erDiversionStatus === 'open';
+    const ok = await confirm({
+      title: isDivert ? '⚠️ Activate Diversion (Amissah Protocol)' : 'Restore ER to OPEN',
+      message: isDivert
+        ? 'This will notify ALL ambulance crews that the ER is at capacity. They will see a red DIVERT banner. Are you sure?'
+        : 'This will restore the ER status to OPEN for incoming ambulances.',
+      confirmLabel: isDivert ? 'Activate Diversion' : 'Set OPEN',
+      variant: isDivert ? 'danger' : 'default',
+    });
+    if (ok) setDiversionStatus(isDivert ? 'divert' : 'open');
+  };
+
   const enRoute = state.ambulances.filter(a => a.status === 'en-route');
   const arrived = state.ambulances.filter(a => a.status === 'arrived');
   const cancelled = state.ambulances.filter(a => a.status === 'cancelled');
@@ -130,8 +177,21 @@ export default function AmbulanceTracker() {
     return `~${Math.ceil(remaining)} min`;
   };
 
+  const totalReserved = state.counters.reduce((s, c) => s + (c.reservedBeds ?? 0), 0);
+  const isDiverted = state.erDiversionStatus === 'divert';
+
   return (
     <div className="amb-tracker-page">
+      {ConfirmEl}
+
+      {/* ── Amissah Protocol: DIVERT Banner ── */}
+      {isDiverted && (
+        <div className="divert-banner">
+          <ShieldAlert size={20} />
+          <span><strong>ER DIVERSION ACTIVE</strong> — Ambulance crews are being notified. Redirect to alternate facilities where possible.</span>
+          <button className="divert-banner-close" onClick={() => setDiversionStatus('open')}>Set OPEN</button>
+        </div>
+      )}
 
       {/* Dispatch toast notifications */}
       <div className="dispatch-toasts">
@@ -148,6 +208,15 @@ export default function AmbulanceTracker() {
         <div className="page-header-top">
           <h1><Truck size={28} /> Ambulance Tracker</h1>
           <div className="tracker-header-actions">
+            {/* Amissah Protocol toggle */}
+            <button
+              className={`btn-diversion ${isDiverted ? 'diverted' : 'open'}`}
+              onClick={handleDiversionToggle}
+              title="Amissah Protocol — toggle ER diversion status"
+            >
+              {isDiverted ? <ShieldAlert size={15} /> : <ShieldCheck size={15} />}
+              {isDiverted ? 'ER: DIVERT' : 'ER: OPEN'}
+            </button>
             <button
               className={`btn-locate ${locating ? 'locating' : ''}`}
               onClick={setHospitalHere}
@@ -193,6 +262,13 @@ export default function AmbulanceTracker() {
           <span className="tsp-val">{enRoute.length}</span>
           <span className="tsp-lbl">en route</span>
         </div>
+        {totalReserved > 0 && (
+          <div className="tracker-stat-pill reserved">
+            <Lock size={15} />
+            <span className="tsp-val">{totalReserved}</span>
+            <span className="tsp-lbl">bed{totalReserved !== 1 ? 's' : ''} held</span>
+          </div>
+        )}
       </div>
 
       {/* ── ER Status Panel ─────────────────────────────────── */}
@@ -341,9 +417,51 @@ export default function AmbulanceTracker() {
                       <span>{amb.notes}</span>
                     </div>
                   )}
+
+                  {/* ── Bed hold status or picker ── */}
+                  {amb.bedHoldCounterId ? (
+                    <div className="amb-bed-hold-status">
+                      <Lock size={13} />
+                      <span>
+                        <strong>{state.counters.find(c => c.id === amb.bedHoldCounterId)?.name ?? 'Bay'}</strong> bed reserved
+                      </span>
+                      <button className="btn-release-hold" onClick={() => releaseBedHold(amb.id)}>
+                        <Unlock size={12} /> Release
+                      </button>
+                    </div>
+                  ) : bedHoldPickerId === amb.id ? (
+                    <div className="bed-hold-picker">
+                      <div className="bed-hold-picker-title"><Lock size={13} /> Select bay to reserve a bed:</div>
+                      <div className="bed-hold-picker-bays">
+                        {state.counters.filter(c => c.isActive).map(c => {
+                          const free = c.beds - c.bedsOccupied - (c.reservedBeds ?? 0);
+                          return (
+                            <button
+                              key={c.id}
+                              className={`bed-hold-bay-btn ${free <= 0 ? 'full' : ''}`}
+                              onClick={() => { holdBedForAmbulance(amb.id, c.id); setBedHoldPickerId(null); }}
+                              disabled={free <= 0}
+                            >
+                              <span className="bhb-name">{c.name}</span>
+                              <span className="bhb-free">{free} free</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <button className="btn-hold-cancel" onClick={() => setBedHoldPickerId(null)}>Cancel</button>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="amb-card-actions">
+                  {!amb.bedHoldCounterId && (
+                    <button
+                      className="btn-reserve-bed"
+                      onClick={() => setBedHoldPickerId(bedHoldPickerId === amb.id ? null : amb.id)}
+                    >
+                      <Bed size={16} /> Reserve Bed
+                    </button>
+                  )}
                   <button className="btn-amb-arrived" onClick={() => ambulanceArrived(amb.id)}>
                     <CheckCircle2 size={16} /> Mark Arrived
                   </button>
@@ -387,6 +505,15 @@ export default function AmbulanceTracker() {
                     <span className="amb-label">Arrived</span>
                     <span>{amb.arrivedAt ? new Date(amb.arrivedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—'}</span>
                   </div>
+                  {amb.arrivedAt && (() => {
+                    const waitedMin = Math.floor((now.getTime() - new Date(amb.arrivedAt).getTime()) / 60000);
+                    return (
+                      <div className={`amb-gate-timer ${waitedMin >= GATE_ALERT_MINUTES ? 'overdue' : ''}`}>
+                        <Timer size={13} />
+                        <span>At gate: {waitedMin}m {waitedMin >= GATE_ALERT_MINUTES ? '— OVERDUE' : ''}</span>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             ))}

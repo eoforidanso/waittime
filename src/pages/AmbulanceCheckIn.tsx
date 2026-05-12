@@ -3,7 +3,7 @@ import { useQueue } from '../context/QueueContext';
 import { useToast } from '../components/Toast';
 import type { Priority, ServiceType } from '../types';
 import { TRIAGE_COLORS } from '../types';
-import { Truck, MapPin, Send, CheckCircle, XCircle, Cross, Navigation2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Truck, MapPin, Send, CheckCircle, XCircle, Cross, Navigation2, ChevronDown, ChevronUp, ShieldAlert, Bed, Lock } from 'lucide-react';
 import AmbulanceMap from '../components/AmbulanceMap';
 
 const HOSPITAL_LS_KEY = 'mediq_hospital_pos';
@@ -202,6 +202,59 @@ export default function AmbulanceCheckIn() {
         {' · '}
         {now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}
       </div>
+
+      {/* ── Amissah Protocol: DIVERT Banner ── */}
+      {state.erDiversionStatus === 'divert' && (
+        <div className="amb-divert-banner">
+          <ShieldAlert size={22} />
+          <div>
+            <strong>ER DIVERSION IN EFFECT</strong>
+            <p>This ER is currently at capacity. Contact the receiving hospital before proceeding. Redirect to an alternate facility if possible.</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Live ER Bed Availability ── */}
+      {(() => {
+        const totalBeds = state.counters.reduce((s, c) => s + c.beds, 0);
+        const occupiedBeds = state.counters.reduce((s, c) => s + c.bedsOccupied, 0);
+        const reservedBeds = state.counters.reduce((s, c) => s + (c.reservedBeds ?? 0), 0);
+        const freeBeds = totalBeds - occupiedBeds - reservedBeds;
+        const pct = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
+        return (
+          <div className={`amb-bed-panel ${freeBeds === 0 ? 'full' : freeBeds <= 3 ? 'low' : 'ok'}`}>
+            <div className="abp-header">
+              <Bed size={18} />
+              <span>ER Bed Availability</span>
+              <span className={`abp-badge ${freeBeds === 0 ? 'full' : freeBeds <= 3 ? 'low' : 'ok'}`}>
+                {freeBeds === 0 ? 'FULL' : freeBeds <= 3 ? 'LOW' : 'AVAILABLE'}
+              </span>
+            </div>
+            <div className="abp-stats">
+              <span className="abp-free">{freeBeds}</span>
+              <span className="abp-label">/ {totalBeds} beds free</span>
+              {reservedBeds > 0 && (
+                <span className="abp-reserved"><Lock size={11} /> {reservedBeds} held</span>
+              )}
+            </div>
+            <div className="abp-bar-track">
+              <div className="abp-bar-fill" style={{ width: `${pct}%` }} />
+            </div>
+            <div className="abp-bays">
+              {state.counters.filter(c => c.isActive).map(c => {
+                const free = c.beds - c.bedsOccupied - (c.reservedBeds ?? 0);
+                return (
+                  <div key={c.id} className={`abp-bay ${free === 0 ? 'full' : ''}`}>
+                    <span className="abp-bay-name">{c.name}</span>
+                    <span className="abp-bay-free">{free}/{c.beds}</span>
+                    {(c.reservedBeds ?? 0) > 0 && <span className="abp-bay-held"><Lock size={9} /></span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {!submitted ? (
         <form className="amb-form" onSubmit={doSubmit}>
@@ -440,6 +493,14 @@ export default function AmbulanceCheckIn() {
 
           {activeAmb.status === 'en-route' && (
             <div className="amb-tracking-actions">
+              {activeAmb.bedHoldCounterId && (
+                <div className="amb-bed-hold-notice">
+                  <Lock size={14} />
+                  <span>
+                    <strong>{state.counters.find(c => c.id === activeAmb.bedHoldCounterId)?.name ?? 'A bay'}</strong> has reserved a bed for your patient
+                  </span>
+                </div>
+              )}
               <button className="btn-amb-arrived" onClick={handleArrived}>
                 <CheckCircle size={18} /> Mark Arrived
               </button>
