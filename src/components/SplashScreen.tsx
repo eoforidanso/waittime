@@ -38,14 +38,14 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
 
         {/* Dedication */}
         <div className="splash-dedication">
-          <span className="splash-in-honor">In Honor Of</span>
+          <span className="splash-in-honor">In Memory Of</span>
           <div className="splash-honoree">
             <span className="splash-heart">♥</span>
             <span className="splash-name">Ernest Amissah</span>
           </div>
           <p className="splash-tribute">
-            Whose vision and dedication inspired this platform —<br />
-            built to bring dignity, speed, and care to every patient.
+            A life well lived, a legacy of care —<br />
+            this platform is dedicated to his memory.
           </p>
         </div>
 
