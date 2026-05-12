@@ -209,8 +209,9 @@ export default function StaffMessages() {
     ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`;
 
     if (user && staffProfile) {
+      const senderName = staffProfile.displayName || staffProfile.email || 'Staff';
       setDoc(doc(db, 'staffTyping', activeChatId), {
-        [user.uid]: { name: staffProfile.displayName, ts: Date.now() },
+        [user.uid]: { name: senderName, ts: Date.now() },
       }, { merge: true }).catch(() => {});
       if (typingTimeout.current) clearTimeout(typingTimeout.current);
       typingTimeout.current = setTimeout(() => {
@@ -226,15 +227,16 @@ export default function StaffMessages() {
     if (typingTimeout.current) clearTimeout(typingTimeout.current);
     setDoc(doc(db, 'staffTyping', activeChatId), { [user.uid]: deleteField() }, { merge: true }).catch(() => {});
 
+    const senderName = staffProfile.displayName || staffProfile.email || 'Staff';
     const msgData: Omit<Message, 'id'> = {
       fromUid: user.uid,
-      fromName: staffProfile.displayName,
+      fromName: senderName,
       text: text.trim(),
       timestamp: Date.now(),
       ...(urgent ? { urgent: true } : {}),
     };
     const urgentPrefix = urgent ? '🔴 URGENT — ' : '';
-    const preview = `${urgentPrefix}${staffProfile.displayName}: ${text.trim().slice(0, 60)}${text.trim().length > 60 ? '…' : ''}`;
+    const preview = `${urgentPrefix}${senderName}: ${text.trim().slice(0, 60)}${text.trim().length > 60 ? '…' : ''}`;
     try {
       await addDoc(collection(db, 'staffChats', activeChatId, 'messages'), msgData);
       await setDoc(doc(db, 'staffChats', activeChatId), {
