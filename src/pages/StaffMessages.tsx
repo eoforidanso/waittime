@@ -5,6 +5,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/Toast';
 import {
   MessageSquare, Send, Users, Search, X, AlertTriangle,
   Pin, Trash2, Stethoscope, Heart, Truck, Phone, CheckCheck,
@@ -77,6 +78,7 @@ const isGroupChat = (id: string) => id === 'team' || id.startsWith('group_');
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function StaffMessages() {
   const { user, staffProfile, listStaffUsers } = useAuth();
+  const toast = useToast();
   const [staff, setStaff] = useState<StaffUser[]>([]);
   const [activeChatId, setActiveChatId] = useState<string>('team');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -245,6 +247,7 @@ export default function StaffMessages() {
       if (inputRef.current) { inputRef.current.style.height = 'auto'; inputRef.current.focus(); }
     } catch (err) {
       console.error('Failed to send:', err);
+      toast.error('Failed to send message', 'Check your connection and try again.');
     } finally {
       setSending(false);
     }
@@ -256,10 +259,10 @@ export default function StaffMessages() {
 
   const handleDeleteMessage = async (msg: Message) => {
     if (msg.fromUid !== user?.uid) return;
-    await updateDoc(doc(db, 'staffChats', activeChatId, 'messages', msg.id), {
+    await setDoc(doc(db, 'staffChats', activeChatId, 'messages', msg.id), {
       deleted: true,
       text: '',
-    }).catch(() => {});
+    }, { merge: true }).catch(() => {});
   };
 
   const handlePinMessage = async (msg: Message) => {
