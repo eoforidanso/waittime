@@ -10120,10 +10120,28 @@ a:focus-visible {
 }
 @media (max-width: 1100px) {
   .dash-main { grid-template-columns: 1fr 1fr; }
+  /* 3rd column (Hospital Wide) spans full width so Escalations/Ambulances stay inside the grid */
+  .dash-col:last-child {
+    grid-column: span 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .dash-col:last-child .dash-panel {
+    flex: 1 1 280px;
+    min-width: 260px;
+  }
 }
 @media (max-width: 720px) {
   .dash-main { grid-template-columns: 1fr; }
   .dash-kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  .dash-col:last-child {
+    flex-direction: column;
+  }
+  .dash-col:last-child .dash-panel {
+    flex: unset;
+    min-width: unset;
+  }
 }
 @media (max-width: 480px) {
   .dash-kpi-strip { grid-template-columns: 1fr 1fr; }
