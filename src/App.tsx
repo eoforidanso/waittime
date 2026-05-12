@@ -41,10 +41,54 @@ const PatientRecords   = lazy(() => import('./pages/PatientRecords'));
 const PatientView      = lazy(() => import('./pages/PatientView'));
 const StaffMessages    = lazy(() => import('./pages/StaffMessages'));
 import useKeyboardShortcuts from './utils/useKeyboardShortcuts';
-import { ToastProvider } from './components/Toast';
+import { ToastProvider, useToast } from './components/Toast';
 import CommandPalette from './components/CommandPalette';
 import { Menu, X } from 'lucide-react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from './lib/firebase';
 import './styles/index.css';
+
+/* ── New-message notifier (fires toasts when staff are on other pages) ── */
+function MessageNotifier() {
+  const { user, staffProfile } = useAuth();
+  const toast = useToast();
+  const location = useLocation();
+  const locationRef = useRef(location.pathname);
+  const staffNameRef = useRef(staffProfile?.displayName);
+  const seenTsRef = useRef<Record<string, number>>({});
+  const isInitialized = useRef(false);
+
+  useEffect(() => { locationRef.current = location.pathname; }, [location.pathname]);
+  useEffect(() => { staffNameRef.current = staffProfile?.displayName; }, [staffProfile]);
+
+  useEffect(() => {
+    if (!user) return;
+    const unsub = onSnapshot(collection(db, 'staffChats'), snap => {
+      if (!isInitialized.current) {
+        snap.docs.forEach(d => { seenTsRef.current[d.id] = d.data().lastTimestamp ?? 0; });
+        isInitialized.current = true;
+        return;
+      }
+      if (locationRef.current === '/messages') return;
+      snap.docs.forEach(d => {
+        const data = d.data();
+        const ts: number = data.lastTimestamp ?? 0;
+        const prev = seenTsRef.current[d.id] ?? 0;
+        if (ts > prev) {
+          seenTsRef.current[d.id] = ts;
+          const preview: string = data.lastMessage ?? 'New message';
+          const senderName = staffNameRef.current;
+          if (!senderName || !preview.startsWith(senderName + ':')) {
+            toast.info('New Message', preview);
+          }
+        }
+      });
+    });
+    return () => unsub();
+  }, [user, toast]);
+
+  return null;
+}
 
 /* ── Staff sidebar layout ── */
 function StaffLayout() {
@@ -87,6 +131,7 @@ function StaffLayout() {
           </Suspense>
         </main>
         <CommandPalette />
+        <MessageNotifier />
         {showKbdHelp && (
           <div className="kbd-help-panel" onClick={() => setShowKbdHelp(false)}>
             <h4>Keyboard Shortcuts</h4>

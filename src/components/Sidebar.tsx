@@ -6,6 +6,7 @@ import { useFeatureFlags } from '../context/FeatureFlagsContext';
 import { LiveAvgWait } from '../utils/waitTime';
 import LiveClock from './LiveClock';
 import { useTheme } from '../utils/useTheme';
+import { useMessagesBadge } from '../utils/useMessagesBadge';
 import {
   LayoutDashboard,
   UserPlus,
@@ -75,6 +76,7 @@ export default function Sidebar({ mode, className = '', onNavClick }: SidebarPro
   const { state } = useQueue();
   const { isAdmin, signOut: firebaseSignOut } = useAuth();
   const { flags } = useFeatureFlags();
+  const messagesBadge = useMessagesBadge();
 
   // Derive active tab from current route; fall back to 'queue'
   const [activeTab, setActiveTab] = useState<SidebarTab>(
@@ -158,6 +160,9 @@ export default function Sidebar({ mode, className = '', onNavClick }: SidebarPro
               <span className={`sidebar-tab-badge${critEscalations > 0 ? ' crit' : ''}`}>
                 {openEscalations}
               </span>
+            )}
+            {messagesBadge > 0 && openEscalations === 0 && (
+              <span className="sidebar-tab-badge">{messagesBadge}</span>
             )}
           </button>
           <button
@@ -253,6 +258,7 @@ export default function Sidebar({ mode, className = '', onNavClick }: SidebarPro
                 </NavLink>
                 <NavLink to="/messages" onClick={onNavClick}>
                   <MessageSquare size={18} /> Messages
+                  {messagesBadge > 0 && <span className="sidebar-badge">{messagesBadge}</span>}
                 </NavLink>
               </>
             )}
