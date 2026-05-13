@@ -41,7 +41,7 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
           <span className="splash-in-honor">In Memory Of</span>
           <div className="splash-honoree">
             <span className="splash-heart">♥</span>
-            <span className="splash-name">Ernest Amissah</span>
+            <span className="splash-name">Charles Amissah</span>
           </div>
           <p className="splash-tribute">
             A life well lived, a legacy of care —<br />
