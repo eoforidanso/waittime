@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { Cross, Stethoscope, Truck, Eye, Sparkles } from 'lucide-react';
+import { Stethoscope, Truck, Eye, Sparkles } from 'lucide-react';
+import MediqCross from '../components/MediqCross';
 
 interface Props {
   onStartTour?: () => void;
@@ -12,8 +13,10 @@ export default function LoginPortal({ onStartTour }: Props) {
     <div className="portal-page">
       <div className="portal-container">
         <div className="portal-brand">
-          <Cross size={40} />
-          <h1>MediQ</h1>
+          <div className="portal-brand-icon">
+            <MediqCross size={52} />
+          </div>
+          <h1 className="portal-brand-title">MediQ</h1>
           <p>Emergency Room Management System</p>
         </div>
 
@@ -56,4 +59,3 @@ export default function LoginPortal({ onStartTour }: Props) {
     </div>
   );
 }
-

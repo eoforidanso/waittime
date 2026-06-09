@@ -173,16 +173,105 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   border-right: 1px solid rgba(255,255,255,0.06);
 }
 
+/* ── Premium brand ── */
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 1.75rem 1.5rem;
-  font-size: 1.4rem;
+  gap: 11px;
+  padding: 1.6rem 1.4rem;
+  border-bottom: 1px solid rgba(96,175,245,0.10);
+  background: linear-gradient(135deg, rgba(30,136,229,0.08) 0%, transparent 60%);
+  text-decoration: none;
+}
+
+/* The SVG icon with ambient glow */
+.mediq-cross-svg {
+  flex-shrink: 0;
+  filter:
+    drop-shadow(0 0 10px rgba(30,136,229,0.55))
+    drop-shadow(0 0 4px  rgba(30,136,229,0.30));
+  transition: filter 0.25s ease;
+}
+.sidebar-brand:hover .mediq-cross-svg {
+  filter:
+    drop-shadow(0 0 16px rgba(30,136,229,0.75))
+    drop-shadow(0 0 7px  rgba(30,136,229,0.45));
+}
+
+/* Gradient wordmark */
+.sidebar-brand-text {
+  font-size: 1.42rem;
   font-weight: 800;
-  letter-spacing: -0.5px;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  background: linear-gradient(135deg, rgba(59,130,246,0.1), transparent);
+  letter-spacing: -0.6px;
+  background: linear-gradient(135deg, #ffffff 25%, #90c9ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+/* ── Splash screen logo (larger) ── */
+.splash-cross .mediq-cross-svg {
+  filter:
+    drop-shadow(0 0 18px rgba(30,136,229,0.65))
+    drop-shadow(0 0 8px  rgba(30,136,229,0.40));
+}
+.splash-wordmark {
+  background: linear-gradient(135deg, #ffffff 20%, #90c9ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Login portal brand ── */
+.portal-brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+.portal-brand-icon .mediq-cross-svg {
+  filter:
+    drop-shadow(0 0 20px rgba(30,136,229,0.60))
+    drop-shadow(0 0 8px  rgba(30,136,229,0.35));
+}
+.portal-brand-title {
+  font-size: 2.2rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -1px !important;
+  background: linear-gradient(135deg, #ffffff 20%, #90c9ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0.25rem 0 0.1rem !important;
+}
+
+/* ── Light mode brand overrides ── */
+[data-theme="light"] .mediq-cross-svg {
+  filter:
+    drop-shadow(0 2px 8px rgba(30,136,229,0.30))
+    drop-shadow(0 1px 3px rgba(30,136,229,0.15));
+}
+[data-theme="light"] .sidebar-brand:hover .mediq-cross-svg {
+  filter:
+    drop-shadow(0 2px 14px rgba(30,136,229,0.45))
+    drop-shadow(0 1px 5px rgba(30,136,229,0.25));
+}
+[data-theme="light"] .sidebar-brand {
+  border-bottom-color: #E5E7EB;
+  background: linear-gradient(135deg, rgba(30,136,229,0.05) 0%, transparent 60%);
+}
+[data-theme="light"] .sidebar-brand-text {
+  background: linear-gradient(135deg, #111827 25%, #1E88E5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+[data-theme="light"] .portal-brand-title {
+  background: linear-gradient(135deg, #111827 20%, #1E88E5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .sidebar-nav {

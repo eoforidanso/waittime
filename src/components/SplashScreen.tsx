@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Cross } from 'lucide-react';
+import MediqCross from './MediqCross';
 
 const SPLASH_DURATION = 4500; // ms before auto-dismiss
 
@@ -25,7 +25,7 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         {/* Logo */}
         <div className="splash-logo">
           <div className="splash-cross">
-            <Cross size={36} />
+            <MediqCross size={44} />
           </div>
           <span className="splash-wordmark">MediQ</span>
         </div>

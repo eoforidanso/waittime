@@ -8,13 +8,13 @@ import { LiveAvgWait } from '../utils/waitTime';
 import LiveClock from './LiveClock';
 import { useTheme } from '../utils/useTheme';
 import { useMessagesBadge } from '../utils/useMessagesBadge';
+import MediqCross from './MediqCross';
 import {
   LayoutDashboard,
   UserPlus,
   MonitorPlay,
   Tv,
   Settings,
-  Cross,
   Truck,
   MapPin,
   Bed,
@@ -111,8 +111,8 @@ export default function Sidebar({ mode, className = '', onNavClick }: SidebarPro
   return (
     <aside className={`sidebar ${className}`}>
       <div className="sidebar-brand">
-        <Cross size={28} />
-        <span>MediQ</span>
+        <MediqCross size={30} />
+        <span className="sidebar-brand-text">MediQ</span>
       </div>
 
       {facilityName && (
