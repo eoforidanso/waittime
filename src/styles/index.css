@@ -7801,11 +7801,13 @@ textarea:focus-visible {
   gap: 6px;
   flex-wrap: wrap;
   margin-bottom: 4px;
+  min-width: 0;
 }
 .escalation-title {
   font-size: 0.95rem;
   font-weight: 700;
   word-break: break-word;
+  min-width: 0;
 }
 
 /* Area badge on cards */
@@ -7816,7 +7818,10 @@ textarea:focus-visible {
   border-radius: 20px;
   color: #fff;
   white-space: nowrap;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .esc-badge {
@@ -7825,8 +7830,13 @@ textarea:focus-visible {
   border-radius: 20px;
   font-weight: 700;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.esc-badge-info     { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.esc-badge-info     { background: rgba(30,136,229,0.15); color: #60aff5; }
 .esc-badge-warning  { background: rgba(245,158,11,0.15); color: #f59e0b; }
 .esc-badge-critical { background: rgba(239,68,68,0.15); color: #ef4444; animation: breach-pulse 1.2s ease-in-out infinite; }
 .escalation-meta {
