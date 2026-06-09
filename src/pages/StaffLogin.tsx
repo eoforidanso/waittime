@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Stethoscope, Lock, Mail, AlertCircle, ArrowLeft, MapPin, ChevronDown } from 'lucide-react';
+import { Stethoscope, Lock, Mail, AlertCircle, ArrowLeft, MapPin, ChevronDown, KeyRound, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useFacility, FACILITIES, type Facility } from '../context/FacilityContext';
@@ -13,8 +13,14 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signOut } = useAuth();
+  const { signIn, signOut, sendPasswordReset } = useAuth();
   const nav = useNavigate();
+
+  // Forgot-password state
+  const [mode, setMode] = useState<'login' | 'forgot' | 'sent'>('login');
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
 
   const { facility, setFacility, displayName } = useFacility();
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(facility);
@@ -55,8 +61,6 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
     try {
       await signIn(email, password);
 
-      // Re-read profile after sign-in to check role
-      // staffProfile may not be updated yet; fetch it directly
       const { getDoc, doc } = await import('firebase/firestore');
       const { db } = await import('../lib/firebase');
       const { auth } = await import('../lib/firebase');
@@ -75,7 +79,6 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
       const role: string = profile.role ?? '';
       const profileFacilityId: string = profile.facilityId ?? '';
 
-      // Admins can log into any facility; all other roles must be assigned to the selected facility
       if (role !== 'admin') {
         if (!profileFacilityId) {
           await signOut();
@@ -91,7 +94,6 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
         }
       }
 
-      // Save facility selection
       setFacility(rf);
       onLogin();
     } catch (err: unknown) {
@@ -112,6 +114,103 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError('');
+    if (!resetEmail.trim()) {
+      setResetError('Please enter your email address.');
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await sendPasswordReset(resetEmail.trim());
+      setMode('sent');
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? '';
+      if (code === 'auth/user-not-found' || code === 'auth/invalid-email') {
+        setResetError('No account found with that email address.');
+      } else if (code === 'auth/too-many-requests') {
+        setResetError('Too many attempts. Please wait a few minutes.');
+      } else {
+        setResetError('Could not send reset email. Try again.');
+      }
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  /* ── Forgot-password view ── */
+  if (mode === 'forgot') {
+    return (
+      <div className="amb-login-page">
+        <div className="amb-login-card staff-login-card">
+          <div className="amb-login-logo staff-login-logo" style={{ background: 'rgba(96,175,245,0.12)', color: '#60aff5' }}>
+            <KeyRound size={34} />
+          </div>
+          <h1 className="amb-login-title">Reset Password</h1>
+          <p className="amb-login-sub">Enter your email and we'll send a reset link</p>
+
+          <form className="amb-login-form" onSubmit={handlePasswordReset}>
+            <div className="amb-login-field">
+              <Mail size={16} className="amb-field-icon" />
+              <input
+                type="email"
+                placeholder="Your email address"
+                value={resetEmail}
+                onChange={e => { setResetEmail(e.target.value); setResetError(''); }}
+                autoComplete="email"
+                autoFocus
+              />
+            </div>
+
+            {resetError && (
+              <div className="amb-login-error">
+                <AlertCircle size={14} /> {resetError}
+              </div>
+            )}
+
+            <button type="submit" className="amb-login-btn staff-login-btn" disabled={resetLoading}>
+              <Mail size={16} /> {resetLoading ? 'Sending…' : 'Send Reset Email'}
+            </button>
+          </form>
+
+          <button className="portal-back-btn" onClick={() => { setMode('login'); setResetError(''); }}>
+            <ArrowLeft size={14} /> Back to Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Sent confirmation view ── */
+  if (mode === 'sent') {
+    return (
+      <div className="amb-login-page">
+        <div className="amb-login-card staff-login-card">
+          <div className="amb-login-logo staff-login-logo" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+            <CheckCircle2 size={34} />
+          </div>
+          <h1 className="amb-login-title" style={{ color: '#10b981' }}>Email Sent!</h1>
+          <p className="amb-login-sub" style={{ textAlign: 'center', lineHeight: 1.6 }}>
+            A password reset link has been sent to<br />
+            <strong style={{ color: '#f1f5f9' }}>{resetEmail}</strong>.<br />
+            Check your inbox (and spam folder).
+          </p>
+
+          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <button
+              className="amb-login-btn staff-login-btn"
+              onClick={() => { setMode('login'); setResetEmail(''); }}
+            >
+              <ArrowLeft size={16} /> Back to Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Normal login view ── */
   return (
     <div className="amb-login-page">
       <div className="amb-login-card staff-login-card">
@@ -168,7 +267,7 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
             <Mail size={16} className="amb-field-icon" />
             <input
               type="email"
-              placeholder="Admin email address"
+              placeholder="Email address"
               value={email}
               onChange={e => { setEmail(e.target.value); setError(''); }}
               autoComplete="email"
@@ -183,6 +282,17 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
               onChange={e => { setPassword(e.target.value); setError(''); }}
               autoComplete="current-password"
             />
+          </div>
+
+          {/* Forgot password link */}
+          <div style={{ textAlign: 'right', marginTop: '-0.25rem' }}>
+            <button
+              type="button"
+              className="forgot-password-link"
+              onClick={() => { setMode('forgot'); setResetEmail(email); setResetError(''); }}
+            >
+              Forgot password?
+            </button>
           </div>
 
           {error && (
@@ -203,4 +313,3 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
     </div>
   );
 }
-

@@ -1498,6 +1498,22 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   box-shadow: 0 4px 12px rgba(30, 136, 229, 0.2);
 }
 
+/* Forgot password link inside login form */
+.forgot-password-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  color: #60aff5;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--transition-fast);
+}
+.forgot-password-link:hover {
+  color: #90c9ff;
+}
+
 .amb-login-hint {
   margin-top: 0.25rem;
   text-align: center;

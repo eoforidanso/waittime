@@ -7,6 +7,7 @@ import {
   createUserWithEmailAndPassword,
   getAuth as getSecondaryAuth,
   updateProfile,
+  sendPasswordResetEmail,
   type User,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
@@ -37,6 +38,7 @@ interface AuthContextType {
   deleteStaffAccount: (uid: string) => Promise<void>;
   setOnlineStatus: (uid: string, isOnline: boolean) => Promise<void>;
   listStaffUsers: () => Promise<StaffUser[]>;
+  sendPasswordReset: (email: string) => Promise<void>;
   isAdmin: boolean;
 }
 
@@ -153,6 +155,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return snap.docs.map(d => d.data() as StaffUser);
   };
 
+  const sendPasswordReset = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
   const isAdmin = staffProfile?.role === 'admin';
 
   return (
@@ -160,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user, staffProfile, loading,
       signIn, signOut,
       createStaffAccount, updateStaffRole, deleteStaffAccount, setOnlineStatus, listStaffUsers,
+      sendPasswordReset,
       isAdmin,
     }}>
       {children}
