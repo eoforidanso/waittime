@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Users, UserPlus, Trash2, Shield, ShieldCheck, AlertCircle, Check, Loader2, WifiOff, Wifi } from 'lucide-react';
+import { Users, UserPlus, Trash2, Shield, ShieldCheck, AlertCircle, Check, Loader2, WifiOff, Wifi, MapPin } from 'lucide-react';
 import { useAuth, type StaffRole, type StaffUser } from '../context/AuthContext';
 import { useConfirm } from '../components/ConfirmDialog';
+import { FACILITIES, useFacility } from '../context/FacilityContext';
 
 // Roles the admin can manually toggle offline/online
 const TOGGLEABLE_ROLES: StaffRole[] = ['doctor', 'nurse', 'receptionist', 'ems'];
@@ -27,6 +28,7 @@ const ALL_ROLES: StaffRole[] = ['admin', 'doctor', 'nurse', 'receptionist', 'ems
 export default function UserManagement() {
   const { user, staffProfile, isAdmin, listStaffUsers, createStaffAccount, updateStaffRole, deleteStaffAccount, setOnlineStatus } = useAuth();
   const { confirm, Dialog: ConfirmEl } = useConfirm();
+  const { facility: currentFacility } = useFacility();
   const [staffList, setStaffList] = useState<StaffUser[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [listError, setListError] = useState('');
@@ -37,6 +39,7 @@ export default function UserManagement() {
   const [formPassword, setFormPassword] = useState('');
   const [formName, setFormName] = useState('');
   const [formRole, setFormRole] = useState<StaffRole>('nurse');
+  const [formFacilityId, setFormFacilityId] = useState<string>(currentFacility?.id ?? '');
   const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
   const [formSuccess, setFormSuccess] = useState('');
@@ -75,11 +78,12 @@ export default function UserManagement() {
     setFormSuccess('');
     if (!formEmail || !formPassword || !formName) { setFormError('All fields are required.'); return; }
     if (formPassword.length < 8) { setFormError('Password must be at least 8 characters.'); return; }
+    if (!formFacilityId) { setFormError('Please select a facility.'); return; }
     setFormLoading(true);
     try {
-      await createStaffAccount(formEmail, formPassword, formName, formRole);
+      await createStaffAccount(formEmail, formPassword, formName, formRole, formFacilityId);
       setFormSuccess(`Account created for ${formName}.`);
-      setFormEmail(''); setFormPassword(''); setFormName(''); setFormRole('nurse');
+      setFormEmail(''); setFormPassword(''); setFormName(''); setFormRole('nurse'); setFormFacilityId(currentFacility?.id ?? '');
       setShowForm(false);
       await refreshList();
     } catch (err: unknown) {
@@ -166,6 +170,17 @@ export default function UserManagement() {
               </select>
             </div>
           </div>
+          <div className="um-form-row">
+            <div className="um-form-field" style={{ gridColumn: '1 / -1' }}>
+              <label><MapPin size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />Assigned Facility</label>
+              <select value={formFacilityId} onChange={e => setFormFacilityId(e.target.value)}>
+                <option value="">— Select facility —</option>
+                {FACILITIES.filter(f => f.id !== 'other').map(f => (
+                  <option key={f.id} value={f.id}>{f.name} — {f.town}</option>
+                ))}
+              </select>
+            </div>
+          </div>
           {formError && <div className="um-alert um-alert-err"><AlertCircle size={14} /> {formError}</div>}
           <button type="submit" className="um-submit-btn" disabled={formLoading}>
             {formLoading ? <><Loader2 size={14} className="um-spin" /> Creating…</> : <><UserPlus size={14} /> Create Account</>}
@@ -190,6 +205,7 @@ export default function UserManagement() {
               <tr>
                 <th>Name</th>
                 <th>Email</th>
+                <th>Facility</th>
                 <th>Role</th>
                 <th>Created</th>
                 {isAdmin && <th>Actions</th>}
@@ -213,6 +229,11 @@ export default function UserManagement() {
                     </span>
                   </td>
                   <td className="um-email">{s.email}</td>
+                  <td className="um-email">
+                    {s.facilityId
+                      ? (FACILITIES.find(f => f.id === s.facilityId)?.name ?? s.facilityId)
+                      : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>—</span>}
+                  </td>
                   <td>
                     {isAdmin && s.uid !== user?.uid ? (
                       <select

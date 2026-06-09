@@ -1,6 +1,5 @@
 import { useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQueue } from '../context/QueueContext';
 
 /**
  * Global keyboard shortcuts for MediQ staff interface.
@@ -19,7 +18,6 @@ export default function useKeyboardShortcuts(
   onShowHelp: (show: boolean) => void,
 ) {
   const nav = useNavigate();
-  const { callNext, state } = useQueue();
 
   const handleKey = useCallback((e: KeyboardEvent) => {
     const tag = (e.target as HTMLElement).tagName.toLowerCase();
@@ -57,7 +55,7 @@ export default function useKeyboardShortcuts(
       default:
         break;
     }
-  }, [nav, callNext, state, onShowHelp]);
+  }, [nav, onShowHelp]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKey);

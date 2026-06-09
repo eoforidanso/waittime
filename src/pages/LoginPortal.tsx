@@ -1,7 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { Cross, Stethoscope, Truck, Eye } from 'lucide-react';
+import { Cross, Stethoscope, Truck, Eye, Sparkles } from 'lucide-react';
 
-export default function LoginPortal() {
+interface Props {
+  onStartTour?: () => void;
+}
+
+export default function LoginPortal({ onStartTour }: Props) {
   const nav = useNavigate();
 
   return (
@@ -39,6 +43,12 @@ export default function LoginPortal() {
           </button>
         </div>
 
+        {onStartTour && (
+          <button className="portal-tour-btn" onClick={onStartTour}>
+            <Sparkles size={15} /> Take a guided tour
+          </button>
+        )}
+
         <div className="portal-footer">
           <small>&copy; 2026 MediQ &middot; Emergency Department</small>
         </div>
@@ -46,3 +56,4 @@ export default function LoginPortal() {
     </div>
   );
 }
+

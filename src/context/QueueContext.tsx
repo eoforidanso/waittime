@@ -581,7 +581,7 @@ function queueReducer(state: QueueState, action: QueueAction): QueueState {
     }
 
     case 'ADD_COUNTER': {
-      const maxId = Math.max(...state.counters.map(c => c.id), 0);
+      const maxId = state.counters.reduce((m, c) => Math.max(m, c.id), 0);
       const newCounter: Counter = {
         id: maxId + 1,
         name: action.payload.name,
@@ -1357,7 +1357,7 @@ export function QueueProvider({ children, auditUser = null }: { children: ReactN
 
   const setDiversionStatus = useCallback((status: 'open' | 'divert') => {
     dispatch({ type: 'SET_DIVERSION_STATUS', payload: { status } });
-    logAudit(auditUserRef.current, 'Amissah Protocol', `ER diversion status set to ${status.toUpperCase()}`);
+    logAudit(auditUserRef.current, 'Ammisah Protocol', `ER diversion status set to ${status.toUpperCase()}`);
   }, []);
 
   const holdBedForAmbulance = useCallback((ambulanceId: string, counterId: number) => {

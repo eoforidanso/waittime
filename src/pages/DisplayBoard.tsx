@@ -10,7 +10,7 @@ export default function DisplayBoard() {
 
   const nowServing = state.tickets
     .filter(t => t.status === 'serving')
-    .sort((a, b) => new Date(b.calledAt!).getTime() - new Date(a.calledAt!).getTime());
+    .sort((a, b) => new Date(b.calledAt ?? 0).getTime() - new Date(a.calledAt ?? 0).getTime());
 
   const waiting = state.tickets
     .filter(t => t.status === 'waiting')

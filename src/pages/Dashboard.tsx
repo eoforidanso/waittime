@@ -196,16 +196,6 @@ export default function Dashboard() {
             <div className="dash-kpi-label">On Duty</div>
           </div>
         </div>
-        <div className="dash-kpi-card" style={{ borderTopColor: openEscalations.length > 0 ? '#ef4444' : '#475569' }}>
-          <div className="dash-kpi-icon" style={{
-            background: openEscalations.length > 0 ? 'rgba(239,68,68,0.12)' : 'rgba(71,85,105,0.12)',
-            color: openEscalations.length > 0 ? '#ef4444' : '#94a3b8',
-          }}><AlertTriangle size={20} /></div>
-          <div className="dash-kpi-body">
-            <div className="dash-kpi-val" style={{ color: openEscalations.length > 0 ? '#ef4444' : '#94a3b8' }}>{openEscalations.length}</div>
-            <div className="dash-kpi-label">Escalations</div>
-          </div>
-        </div>
       </div>
 
       {/* ── Main 3-column grid ────────────────────────────────────────────── */}
@@ -323,6 +313,36 @@ export default function Dashboard() {
                 {state.nurses.filter(n => n.onDuty).length > 5 && (
                   <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>
                     +{state.nurses.filter(n => n.onDuty).length - 5} more on duty
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Escalations */}
+          <div className="dash-panel">
+            <div className="dash-panel-title" style={{ color: openEscalations.length > 0 ? '#ef4444' : undefined }}>
+              <AlertTriangle size={14} /> Escalations
+              <span className="dash-panel-badge" style={{ color: openEscalations.length > 0 ? '#ef4444' : undefined }}>
+                {openEscalations.length} open
+              </span>
+            </div>
+            {openEscalations.length === 0 ? (
+              <p className="empty-text" style={{ margin: 0, color: '#10b981' }}>No open escalations</p>
+            ) : (
+              <div className="dash-escal-list">
+                {openEscalations.slice(0, 4).map(e => (
+                  <div key={e.id} className={`dash-escal-item dash-escal-${e.severity}`}>
+                    <div className="dash-escal-top">
+                      <span className="dash-escal-sev">{e.severity}</span>
+                      <span className="dash-escal-title">{e.title}</span>
+                    </div>
+                    <div className="dash-escal-meta">{e.area} · {e.author}</div>
+                  </div>
+                ))}
+                {openEscalations.length > 4 && (
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: '2px 0 0' }}>
+                    +{openEscalations.length - 4} more - see Escalation Log
                   </p>
                 )}
               </div>
@@ -514,36 +534,6 @@ export default function Dashboard() {
                 <p className="empty-text" style={{ margin: 0 }}>No wards configured</p>
               )}
             </div>
-          </div>
-
-          {/* Escalations */}
-          <div className="dash-panel">
-            <div className="dash-panel-title" style={{ color: openEscalations.length > 0 ? '#ef4444' : undefined }}>
-              <AlertTriangle size={14} /> Escalations
-              <span className="dash-panel-badge" style={{ color: openEscalations.length > 0 ? '#ef4444' : undefined }}>
-                {openEscalations.length} open
-              </span>
-            </div>
-            {openEscalations.length === 0 ? (
-              <p className="empty-text" style={{ margin: 0, color: '#10b981' }}>✓ No open escalations</p>
-            ) : (
-              <div className="dash-escal-list">
-                {openEscalations.slice(0, 4).map(e => (
-                  <div key={e.id} className={`dash-escal-item dash-escal-${e.severity}`}>
-                    <div className="dash-escal-top">
-                      <span className="dash-escal-sev">{e.severity}</span>
-                      <span className="dash-escal-title">{e.title}</span>
-                    </div>
-                    <div className="dash-escal-meta">{e.area} · {e.author}</div>
-                  </div>
-                ))}
-                {openEscalations.length > 4 && (
-                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: '2px 0 0' }}>
-                    +{openEscalations.length - 4} more — see Escalation Log
-                  </p>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Ambulances en route */}

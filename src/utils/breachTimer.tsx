@@ -29,6 +29,8 @@ export function BreachCountdown({ triagedAt, priority, className = '' }: BreachC
   const [remaining, setRemaining] = useState(() => getMsRemaining(triagedAt, priority));
 
   useEffect(() => {
+    // Immediately sync state when props change, then keep ticking
+    setRemaining(getMsRemaining(triagedAt, priority));
     const id = setInterval(() => setRemaining(getMsRemaining(triagedAt, priority)), 1000);
     return () => clearInterval(id);
   }, [triagedAt, priority]);

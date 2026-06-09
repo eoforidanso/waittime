@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, deleteApp } from 'firebase/app';
 import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
@@ -21,6 +21,7 @@ export interface StaffUser {
   email: string;
   displayName: string;
   role: StaffRole;
+  facilityId?: string;
   createdAt: string | number;
   isOnline?: boolean;
 }
@@ -31,7 +32,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  createStaffAccount: (email: string, password: string, displayName: string, role: StaffRole) => Promise<void>;
+  createStaffAccount: (email: string, password: string, displayName: string, role: StaffRole, facilityId?: string) => Promise<void>;
   updateStaffRole: (uid: string, role: StaffRole) => Promise<void>;
   deleteStaffAccount: (uid: string) => Promise<void>;
   setOnlineStatus: (uid: string, isOnline: boolean) => Promise<void>;
@@ -94,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     displayName: string,
     role: StaffRole,
+    facilityId?: string,
   ) => {
     // Firebase Auth doesn't support creating secondary users from the client
     // without signing them in, so we use a secondary auth instance trick.
@@ -113,16 +115,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         displayName,
         role,
+        ...(facilityId ? { facilityId } : {}),
         createdAt: new Date().toISOString(),
       };
       await setDoc(doc(db, 'staff', cred.user.uid), profile);
       await secondaryAuth.signOut();
       // Audit the creation — use the admin who is currently logged in
       if (staffProfile) {
-        logAudit({ uid: staffProfile.uid, displayName: staffProfile.displayName }, 'Staff Account Created', `${displayName} (${email}) — role: ${role}`);
+        logAudit({ uid: staffProfile.uid, displayName: staffProfile.displayName }, 'Staff Account Created', `${displayName} (${email}) — role: ${role}${facilityId ? ` — facility: ${facilityId}` : ''}`);
       }
     } finally {
-      await secondaryApp.delete();
+      await deleteApp(secondaryApp);
     }
   };
 

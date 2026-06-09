@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /** Format a duration in minutes to "Xh Ym" or "Ym" */
 export function formatWaitTime(minutes: number): string {
@@ -46,11 +46,15 @@ export function LiveAvgWait({ waitingCreatedAts, completedWaits, className }: {
     return all.reduce((s, v) => s + v, 0) / all.length;
   };
 
+  // Keep a ref to the latest compute so the interval never uses a stale closure
+  const computeRef = useRef(compute);
+  computeRef.current = compute;
+
   const [avg, setAvg] = useState(compute);
 
   useEffect(() => {
-    setAvg(compute());
-    const interval = setInterval(() => setAvg(compute()), 10000);
+    setAvg(computeRef.current());
+    const interval = setInterval(() => setAvg(computeRef.current()), 10000);
     return () => clearInterval(interval);
   }, [waitingCreatedAts.length, completedWaits.length]);
 

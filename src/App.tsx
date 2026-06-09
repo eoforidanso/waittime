@@ -1,8 +1,9 @@
-import { useState, useCallback, useEffect, lazy, Suspense, useRef, Component, type ReactNode, type ErrorInfo } from 'react';
+import React, { useState, useCallback, useEffect, lazy, Suspense, useRef, Component, type ReactNode, type ErrorInfo } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { QueueProvider } from './context/QueueContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { FeatureFlagsProvider, useFeatureFlags } from './context/FeatureFlagsContext';
+import { FacilityProvider } from './context/FacilityContext';
 import SplashScreen from './components/SplashScreen';
 
 /** Catches render errors in any child page so the sidebar stays visible */
@@ -42,6 +43,7 @@ import Sidebar from './components/Sidebar';
 import StaffGuard from './components/StaffGuard';
 import AmbulanceGuard from './components/AmbulanceGuard';
 import AmbulanceSirenAlert from './components/AmbulanceSirenAlert';
+import GuidedTour from './components/GuidedTour';
 
 // Eagerly-loaded (needed on first paint or very small)
 import LoginPortal from './pages/LoginPortal';
@@ -233,6 +235,24 @@ function StaffLoginRoute() {
   return <StaffLogin onLogin={() => nav('/', { replace: true })} />;
 }
 
+/** Context to trigger the tour from anywhere */
+const TourContext = React.createContext<{ startTour: () => void }>({ startTour: () => {} });
+
+function TourWrapper({ children }: { children: React.ReactNode }) {
+  const [tourOpen, setTourOpen] = useState(false);
+  return (
+    <TourContext.Provider value={{ startTour: () => setTourOpen(true) }}>
+      {children}
+      {tourOpen && <GuidedTour onClose={() => setTourOpen(false)} />}
+    </TourContext.Provider>
+  );
+}
+
+function LoginPortalWithTour() {
+  const { startTour } = React.useContext(TourContext);
+  return <LoginPortal onStartTour={startTour} />;
+}
+
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   return (
@@ -251,12 +271,14 @@ function AppBridge() {
     : null;
   return (
     <FeatureFlagsProvider>
+    <FacilityProvider>
     <QueueProvider auditUser={auditUser}>
       <ToastProvider>
         <BrowserRouter>
+          <TourWrapper>
           <Routes>
             {/* Public routes — no sidebar */}
-            <Route path="/login" element={<LoginPortal />} />
+            <Route path="/login" element={<LoginPortalWithTour />} />
             <Route path="/staff-login" element={<StaffLoginRoute />} />
             <Route path="/display" element={<PageErrorBoundary><DisplayBoard /></PageErrorBoundary>} />
             <Route path="/patient" element={<PageErrorBoundary><Suspense fallback={<div className="page-loading" />}><PatientView /></Suspense></PageErrorBoundary>} />
@@ -267,9 +289,11 @@ function AppBridge() {
             {/* Staff routes — staff sidebar (default) */}
             <Route path="/*" element={<StaffLayout />} />
           </Routes>
+          </TourWrapper>
         </BrowserRouter>
       </ToastProvider>
     </QueueProvider>
+    </FacilityProvider>
     </FeatureFlagsProvider>
   );
 }

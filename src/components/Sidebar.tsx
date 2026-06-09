@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useQueue } from '../context/QueueContext';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlags } from '../context/FeatureFlagsContext';
+import { useFacility } from '../context/FacilityContext';
 import { LiveAvgWait } from '../utils/waitTime';
 import LiveClock from './LiveClock';
 import { useTheme } from '../utils/useTheme';
@@ -77,6 +78,7 @@ export default function Sidebar({ mode, className = '', onNavClick }: SidebarPro
   const { state } = useQueue();
   const { isAdmin, signOut: firebaseSignOut } = useAuth();
   const { flags } = useFeatureFlags();
+  const { displayName: facilityName } = useFacility();
   const messagesBadge = useMessagesBadge();
 
   // Derive active tab from current route; fall back to 'queue'
@@ -112,6 +114,13 @@ export default function Sidebar({ mode, className = '', onNavClick }: SidebarPro
         <Cross size={28} />
         <span>MediQ</span>
       </div>
+
+      {facilityName && (
+        <div className="sidebar-facility">
+          <MapPin size={11} />
+          <span>{facilityName}</span>
+        </div>
+      )}
 
       {mode === 'staff' && (
         <div

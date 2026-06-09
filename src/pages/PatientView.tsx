@@ -11,37 +11,48 @@ const CHORDS_HZ = [
   [196.00, 246.94, 293.66, 369.99],   // G6
 ];
 
-function scheduleAmbient(ctx: AudioContext, master: GainNode, stopRef: { current: boolean }) {
+function scheduleAmbient(ctx: AudioContext, master: GainNode, stopRef: { current: boolean }): () => void {
   let chordIdx = 0;
+  let timerId: ReturnType<typeof setTimeout> | null = null;
 
   const playChord = () => {
-    if (stopRef.current) return;
+    if (stopRef.current || ctx.state === 'closed') return;
     const chord = CHORDS_HZ[chordIdx % CHORDS_HZ.length];
     chordIdx++;
 
-    chord.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    try {
+      chord.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
-      // Mix sine + triangle for a soft piano-pad timbre
-      osc.type = i % 2 === 0 ? 'sine' : 'triangle';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        // Mix sine + triangle for a soft piano-pad timbre
+        osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
 
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 2.5);
-      gain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 7);
-      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 10);
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 2.5);
+        gain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 7);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 10);
 
-      osc.connect(gain);
-      gain.connect(master);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 11);
-    });
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 11);
+      });
+    } catch {
+      // AudioContext was closed between the check and the call — stop scheduling
+      return;
+    }
 
-    setTimeout(playChord, 8000);
+    timerId = setTimeout(playChord, 8000);
   };
 
   playChord();
+
+  // Return a cancel function so the caller can stop the loop without waiting for stopRef
+  return () => {
+    if (timerId !== null) clearTimeout(timerId);
+  };
 }
 
 export default function PatientView() {
@@ -54,6 +65,7 @@ export default function PatientView() {
   const masterGainRef = useRef<GainNode | null>(null);
   const stopRef = useRef(false);
   const startedRef = useRef(false);
+  const cancelAmbientRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
@@ -74,7 +86,7 @@ export default function PatientView() {
       audioCtxRef.current = ctx;
       masterGainRef.current = master;
       setAudioBlocked(false);
-      scheduleAmbient(ctx, master, stopRef);
+      cancelAmbientRef.current = scheduleAmbient(ctx, master, stopRef);
     } catch {
       // Audio API not available
     }
@@ -112,6 +124,7 @@ export default function PatientView() {
   useEffect(() => {
     return () => {
       stopRef.current = true;
+      cancelAmbientRef.current?.();
       audioCtxRef.current?.close();
     };
   }, []);
