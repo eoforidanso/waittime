@@ -71,7 +71,6 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
       if (!snap.exists()) {
         await signOut();
         setError('No staff profile found. Contact your administrator.');
-        setLoading(false);
         return;
       }
 
@@ -83,13 +82,11 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
         if (!profileFacilityId) {
           await signOut();
           setError('Your account has no facility assigned. Contact your administrator.');
-          setLoading(false);
           return;
         }
         if (profileFacilityId !== rf.id) {
           await signOut();
           setError('Access denied. You are not registered for this facility.');
-          setLoading(false);
           return;
         }
       }
