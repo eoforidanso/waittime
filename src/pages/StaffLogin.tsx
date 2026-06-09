@@ -126,11 +126,22 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
       await sendPasswordReset(resetEmail.trim());
       setMode('sent');
     } catch (err: unknown) {
+      const message = (err as Error).message ?? '';
       const code = (err as { code?: string }).code ?? '';
-      if (code === 'auth/user-not-found' || code === 'auth/invalid-email') {
-        setResetError('No account found with that email address.');
-      } else if (code === 'auth/too-many-requests') {
+      console.error('[PasswordReset] Firebase error:', { code, message });
+
+      // Firebase sendPasswordResetEmail doesn't throw for non-existent emails (success-silence pattern)
+      // but we'll still catch other errors
+      if (code === 'auth/too-many-requests') {
         setResetError('Too many attempts. Please wait a few minutes.');
+      } else if (code === 'auth/invalid-email') {
+        setResetError('Please enter a valid email address.');
+      } else if (code === 'auth/unauthorized-domain') {
+        setResetError('Domain not authorized. Contact your administrator.');
+      } else if (code === 'auth/network-request-failed') {
+        setResetError('Network error. Check your connection and try again.');
+      } else if (code) {
+        setResetError(`Error: ${code}. Check console for details.`);
       } else {
         setResetError('Could not send reset email. Try again.');
       }
@@ -174,7 +185,7 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
             </button>
           </form>
 
-          <button className="portal-back-btn" onClick={() => { setMode('login'); setResetError(''); }}>
+          <button className="portal-back-btn" onClick={() => { setMode('login'); setResetError(''); setResetEmail(''); }}>
             <ArrowLeft size={14} /> Back to Sign In
           </button>
         </div>
@@ -193,14 +204,14 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
           <h1 className="amb-login-title" style={{ color: '#10b981' }}>Email Sent!</h1>
           <p className="amb-login-sub" style={{ textAlign: 'center', lineHeight: 1.6 }}>
             A password reset link has been sent to<br />
-            <strong style={{ color: '#f1f5f9' }}>{resetEmail}</strong>.<br />
+            <strong className="reset-email-display">{resetEmail}</strong>.<br />
             Check your inbox (and spam folder).
           </p>
 
           <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <button
               className="amb-login-btn staff-login-btn"
-              onClick={() => { setMode('login'); setResetEmail(''); }}
+              onClick={() => { setMode('login'); setResetEmail(''); setResetError(''); }}
             >
               <ArrowLeft size={16} /> Back to Sign In
             </button>
