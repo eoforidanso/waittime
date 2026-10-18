@@ -257,10 +257,18 @@ function LoginPortalWithTour() {
 }
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    // Wall screens run unattended — never cover them
+    if (/^\/(display|patient)\b/.test(window.location.pathname)) return false;
+    try { return sessionStorage.getItem('mediq_splash_seen') !== '1'; } catch { return true; }
+  });
+  const hideSplash = () => {
+    try { sessionStorage.setItem('mediq_splash_seen', '1'); } catch { /* storage blocked */ }
+    setShowSplash(false);
+  };
   return (
     <AuthProvider>
-      {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+      {showSplash && <SplashScreen onDone={hideSplash} />}
       <AppBridge />
     </AuthProvider>
   );

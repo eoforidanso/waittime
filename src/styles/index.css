@@ -375,6 +375,8 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .page-header p {
@@ -3632,7 +3634,7 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 .btn-locate,
 .btn-toggle-map {
@@ -7845,12 +7847,16 @@ textarea:focus-visible {
   padding: 1rem;
   text-align: center;
 }
-.bed-stat-box .bsb-value {
+.bed-stat-box .bsb-value,
+.bed-stat-box .bed-stat-num {
+  display: block;
   font-size: 2rem;
   font-weight: 900;
   line-height: 1;
 }
-.bed-stat-box .bsb-label {
+.bed-stat-box .bsb-label,
+.bed-stat-box .bed-stat-label {
+  display: block;
   font-size: 0.78rem;
   color: var(--text-secondary);
   margin-top: 4px;
@@ -11086,7 +11092,8 @@ a:focus-visible {
 .ipt-unit-delete-btn:hover { color: #ef4444; border-color: #ef4444; background: rgba(239,68,68,0.08); }
 
 /* Add Ward button alignment */
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+/* Only headers with an action button go side-by-side — a global rule squeezed every page title */
+.page-header.page-header-split { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .ipt-add-ward-btn { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; margin-top: 4px; }
 
 /* Colour swatches in ward form */
@@ -11261,7 +11268,8 @@ a:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 600;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 /* Main 3-column layout */
@@ -11477,6 +11485,18 @@ a:focus-visible {
   color: var(--primary-accent);
 }
 .dash-queue-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+/* Priority tag stacked over the Bay button so patient details keep most of the width */
+.dash-queue-item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-areas: "pos info tag" "pos info btn";
+  column-gap: 0.75rem;
+  row-gap: 4px;
+}
+.dash-queue-item > .dash-queue-pos  { grid-area: pos; align-self: center; }
+.dash-queue-item > .dash-queue-info { grid-area: info; align-self: center; }
+.dash-queue-item > .priority-tag    { grid-area: tag; justify-self: end; align-self: end; }
+.dash-queue-item > .btn-assign-bay  { grid-area: btn; justify-self: end; align-self: start; }
 .dash-queue-info strong {
   font-size: 0.85rem;
   font-weight: 600;
@@ -11488,6 +11508,7 @@ a:focus-visible {
 .dash-queue-info small  {
   font-size: 0.7rem;
   color: rgba(255,255,255,0.55);
+  line-height: 1.4;
 }
 
 /* Now Serving */
@@ -11620,6 +11641,8 @@ a:focus-visible {
   .dash-main { grid-template-columns: 1fr; }
   .dash-kpi-strip { grid-template-columns: repeat(2, 1fr); }
   .dash-col:last-child {
+    /* undo the tablet "span 2" — in a 1-column grid it adds a phantom column that crushes the rest */
+    grid-column: auto;
     flex-direction: column;
     width: 100%;
   }

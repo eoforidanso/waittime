@@ -230,7 +230,7 @@ export default function InpatientBedBoard() {
 
   return (
     <div className="inpatient-page">
-      <div className="page-header">
+      <div className="page-header page-header-split">
         <div>
           <h1><Building2 size={28} /> Inpatient Bed Management</h1>
           <p>Hospital-wide ward and bed status — admit, transfer, and discharge patients</p>
