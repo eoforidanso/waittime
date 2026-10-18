@@ -4631,7 +4631,7 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 
 .waiting-row {
   display: grid;
-  grid-template-columns: 30px 90px 1fr 60px auto;
+  grid-template-columns: 30px 72px minmax(80px, 1fr) auto auto minmax(0, 110px);
   gap: 12px;
   align-items: center;
   padding: 0.55rem 0.75rem;
@@ -4652,8 +4652,10 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 }
 
 .wr-ticket { font-weight: 700; }
+.wr-name, .wr-service { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wr-triage, .wr-wait { white-space: nowrap; }
 .wr-name { color: rgba(255,255,255,.7); }
-.wr-service { color: rgba(255,255,255,.3); font-size: 0.8rem; }
+.wr-service { color: rgba(255,255,255,.3); font-size: 0.8rem; text-align: right; }
 .wr-triage { color: rgba(255,255,255,.4); font-size: 0.8rem; font-weight: 500; }
 .wr-wait { color: rgba(255,255,255,.5); font-size: 0.85rem; font-weight: 600; }
 
@@ -6242,7 +6244,7 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   .ns-ticket { min-width: auto; width: 100%; }
   .ns-meta { align-items: flex-start; }
   .waiting-row {
-    grid-template-columns: 24px 70px 1fr auto auto;
+    grid-template-columns: 24px 70px minmax(0, 1fr) auto auto;
     gap: 8px;
     font-size: 0.82rem;
     padding: 0.5rem;
@@ -6347,10 +6349,11 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   .counter-chip { min-width: 0; flex: 1; }
 
   .waiting-row {
-    grid-template-columns: 20px 60px 1fr auto;
+    grid-template-columns: 20px 60px minmax(0, 1fr) auto;
     gap: 6px;
     font-size: 0.78rem;
   }
+  .wr-triage { display: none; }
 
   .amb-form { padding: 1.25rem; margin: 0.75rem; }
   .amb-field input,
@@ -13281,7 +13284,7 @@ a:focus-visible {
 /* ── 7. Waiting-queue row — compact on small phones ─────────────────────── */
 @media (max-width: 480px) {
   .waiting-row {
-    grid-template-columns: 20px 60px 1fr auto;
+    grid-template-columns: 20px 60px minmax(0, 1fr) auto;
     font-size: 0.78rem;
     padding: 0.4rem 0.5rem;
     gap: 6px;

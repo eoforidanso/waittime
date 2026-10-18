@@ -60,17 +60,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
-      if (firebaseUser) {
-        const profileSnap = await getDoc(doc(db, 'staff', firebaseUser.uid));
-        if (profileSnap.exists()) {
-          setStaffProfile(profileSnap.data() as StaffUser);
+      try {
+        if (firebaseUser) {
+          const profileSnap = await getDoc(doc(db, 'staff', firebaseUser.uid));
+          setStaffProfile(profileSnap.exists() ? profileSnap.data() as StaffUser : null);
         } else {
           setStaffProfile(null);
         }
-      } else {
+      } catch {
+        // Offline / permission error — don't leave the app stuck on the loading screen
         setStaffProfile(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
     return unsub;
   }, []);

@@ -60,11 +60,18 @@ function Sel({ label, value, onChange, options, note }: {
   options: { label: string; value: number }[];
   note?: string;
 }) {
+  // Several options can carry the same score (e.g. NEWS2 RR ≤8 and ≥25 both = 3),
+  // so the <select> tracks the chosen index rather than the score value.
+  const [idx, setIdx] = useState(() => Math.max(0, options.findIndex(o => o.value === value)));
   return (
     <div className="mc-field">
       <label className="mc-label">{label}{note && <span className="mc-label-note"> ({note})</span>}</label>
-      <select className="mc-select" value={value} onChange={e => onChange(Number(e.target.value))}>
-        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      <select className="mc-select" value={idx} onChange={e => {
+        const i = Number(e.target.value);
+        setIdx(i);
+        onChange(options[i].value);
+      }}>
+        {options.map((o, i) => <option key={i} value={i}>{o.label}</option>)}
       </select>
     </div>
   );
@@ -224,7 +231,9 @@ function NEWS2Calc() {
   const [temp, setTemp] = useState(0);
   const score = rr + spo2 + o2 + sbp + hr + cons + temp;
   const interp = score === 0 ? { label: 'Low Risk', color: 'green' as const, sub: 'Minimum 12-hourly monitoring' }
-    : score <= 4 ? { label: 'Low–Medium Risk', color: 'blue' as const, sub: 'Increase monitoring frequency' }
+    : score <= 4 && [rr, spo2, sbp, hr, cons, temp].some(v => v === 3)
+      ? { label: 'Low–Medium Risk — Urgent Review', color: 'amber' as const, sub: 'Single parameter scoring 3 — urgent ward-based review' }
+    : score <= 4 ? { label: 'Low Risk', color: 'blue' as const, sub: 'Increase monitoring frequency' }
     : score <= 6 ? { label: 'Medium Risk — Urgent Review', color: 'amber' as const, sub: 'Urgent review by ward doctor / escalate' }
     : { label: 'High Risk — Emergency', color: 'red' as const, sub: 'Immediate response — critical care team' };
   return (
@@ -294,8 +303,9 @@ function WellsDVTCalc() {
   const [pitting, setPitting] = useState(false);
   const [collat, setCollat] = useState(false);
   const [prevDvt, setPrevDvt] = useState(false);
+  const [veins, setVeins] = useState(false);
   const [altDx, setAltDx] = useState(false);
-  const score = [cancer, paralysis, bedrest, tender, calf, pitting, collat, prevDvt]
+  const score = [cancer, paralysis, bedrest, tender, calf, pitting, collat, veins, prevDvt]
     .filter(Boolean).length - (altDx ? 2 : 0);
   const interp = score <= 0 ? { label: 'Low Probability', color: 'green' as const, sub: 'DVT unlikely — consider D-dimer' }
     : score <= 2 ? { label: 'Moderate Probability', color: 'amber' as const, sub: 'Do ultrasound / D-dimer' }
@@ -313,7 +323,8 @@ function WellsDVTCalc() {
         <Chk label="Entire leg swollen" checked={calf} onChange={setCalf} points={1} />
         <Chk label="Calf swelling > 3 cm vs asymptomatic side" checked={pitting} onChange={setPitting} points={1} />
         <Chk label="Pitting oedema confined to symptomatic leg" checked={collat} onChange={setCollat} points={1} />
-        <Chk label="Collateral superficial veins (non-varicose)" checked={prevDvt} onChange={setPrevDvt} points={1} />
+        <Chk label="Collateral superficial veins (non-varicose)" checked={veins} onChange={setVeins} points={1} />
+        <Chk label="Previously documented DVT" checked={prevDvt} onChange={setPrevDvt} points={1} />
         <Chk label="Alternative diagnosis at least as likely" checked={altDx} onChange={setAltDx} points={-2} />
         <CalcResult score={score} label={interp.label} color={interp.color} sub={interp.sub} />
       </div>
@@ -335,7 +346,7 @@ function WellsPECalc() {
   const score =
     (dvtSigns  ? 3 : 0) + (peFirst   ? 3 : 0) + (hr100 ? 1.5 : 0) +
     (immob     ? 1.5 : 0) + (prevDvtPe ? 1.5 : 0) + (haem ? 1 : 0) + (malig ? 1 : 0);
-  const interp = score <= 1 ? { label: 'Low Probability', color: 'green' as const, sub: 'PE unlikely — PERC / D-dimer pathway' }
+  const interp = score < 2 ? { label: 'Low Probability', color: 'green' as const, sub: 'PE unlikely — PERC / D-dimer pathway' }
     : score <= 6 ? { label: 'Moderate Probability', color: 'amber' as const, sub: 'D-dimer or CTPA' }
     : { label: 'High Probability', color: 'red' as const, sub: 'Proceed to CTPA / anticoagulation' };
   return (
@@ -346,9 +357,9 @@ function WellsPECalc() {
       <div className="mc-body">
         <Chk label="Clinical signs of DVT" checked={dvtSigns} onChange={setDvtSigns} points={3} />
         <Chk label="PE is #1 diagnosis or equally likely" checked={peFirst} onChange={setPeFirst} points={3} />
-        <Chk label="Heart rate > 100 bpm" checked={hr100} onChange={setHr100} />
-        <Chk label="Immobilisation ≥ 3 days or surgery within 4 weeks" checked={immob} onChange={setImmob} />
-        <Chk label="Previous DVT / PE" checked={prevDvtPe} onChange={setPrevDvtPe} />
+        <Chk label="Heart rate > 100 bpm" checked={hr100} onChange={setHr100} points={1.5} />
+        <Chk label="Immobilisation ≥ 3 days or surgery within 4 weeks" checked={immob} onChange={setImmob} points={1.5} />
+        <Chk label="Previous DVT / PE" checked={prevDvtPe} onChange={setPrevDvtPe} points={1.5} />
         <Chk label="Haemoptysis" checked={haem} onChange={setHaem} points={1} />
         <Chk label="Malignancy (on treatment / treated within 6 months)" checked={malig} onChange={setMalig} points={1} />
         <CalcResult score={score} label={interp.label} color={interp.color} sub={interp.sub} />
@@ -431,7 +442,7 @@ function AnionGapCalc() {
 // ═══════════════════════════════════════════════════════════════════════════
 //  9. Cockcroft-Gault eGFR
 // ═══════════════════════════════════════════════════════════════════════════
-function eGFRCalc() {
+function EGFRCalc() {
   const [age,  setAge]  = useState('');
   const [wt,   setWt]   = useState('');
   const [cr,   setCr]   = useState('');
@@ -453,7 +464,7 @@ function eGFRCalc() {
   return (
     <div className="mc-card" id="egfr">
       <div className="mc-header" style={{ borderLeftColor: '#06b6d4' }}>
-        <FlaskConical size={16} /><h3>eGFR (Cockcroft-Gault)</h3>
+        <FlaskConical size={16} /><h3>Creatinine Clearance (Cockcroft-Gault)</h3>
       </div>
       <div className="mc-body">
         <Num label="Age" value={age} onChange={setAge} unit="years" min={1} max={120} step={1} />
@@ -531,7 +542,7 @@ function PaedsWeightCalc() {
     if (yrV >= 1 && yrV <= 5) {
       wt = +(2 * yrV + 8).toFixed(1);
       formula = '(2 × age) + 8 (1–5 years)';
-    } else if (yrV <= 12) {
+    } else if (yrV > 5 && yrV <= 12) {
       wt = +(3 * yrV + 7).toFixed(1);
       formula = '(3 × age) + 7 (6–12 years)';
     }
@@ -570,8 +581,8 @@ function AlvaradoCalc() {
   const [tempRise, setTempRise]       = useState(false);
   const score =
     (migratePain ? 1 : 0) + (anorexia ? 1 : 0) + (nausea ? 1 : 0) +
-    (tenderness ? 2 : 0) + (rebound ? 1 : 0) + (elevated ? 2 : 0) +
-    (leukocytosis ? 1 : 0) + (tempRise ? 1 : 0);
+    (tenderness ? 2 : 0) + (rebound ? 1 : 0) + (elevated ? 1 : 0) +
+    (leukocytosis ? 2 : 0) + (tempRise ? 1 : 0);
   const interp = score <= 3 ? { label: 'Low — Unlikely Appendicitis', color: 'green' as const, sub: 'Discharge with safety net' }
     : score <= 6 ? { label: 'Moderate — Possible Appendicitis', color: 'amber' as const, sub: 'Active observation / surgical review' }
     : { label: 'High — Probable Appendicitis', color: 'red' as const, sub: 'Surgical consult / consider theatre' };
@@ -586,8 +597,8 @@ function AlvaradoCalc() {
         <Chk label="Nausea / Vomiting" checked={nausea} onChange={setNausea} points={1} />
         <Chk label="Tenderness in RIF" checked={tenderness} onChange={setTenderness} points={2} />
         <Chk label="Rebound tenderness" checked={rebound} onChange={setRebound} points={1} />
-        <Chk label="Elevated temperature (> 37.3°C)" checked={elevated} onChange={setElevated} points={2} />
-        <Chk label="Leukocytosis (WBC > 10 × 10⁹/L)" checked={leukocytosis} onChange={setLeuko} points={1} />
+        <Chk label="Elevated temperature (> 37.3°C)" checked={elevated} onChange={setElevated} points={1} />
+        <Chk label="Leukocytosis (WBC > 10 × 10⁹/L)" checked={leukocytosis} onChange={setLeuko} points={2} />
         <Chk label="Left shift (neutrophil predominance)" checked={tempRise} onChange={setTempRise} points={1} />
         <CalcResult score={`${score} / 10`} label={interp.label} color={interp.color} sub={interp.sub} />
       </div>
@@ -607,7 +618,7 @@ const CALCS: { id: string; category: Exclude<Category, 'all'>; element: React.Re
   { id: 'wells-dvt',category: 'vascular',    element: <WellsDVTCalc /> },
   { id: 'corr-ca',  category: 'biochem',     element: <CorrectedCalciumCalc /> },
   { id: 'anion-gap',category: 'biochem',     element: <AnionGapCalc /> },
-  { id: 'egfr',     category: 'biochem',     element: <eGFRCalc /> },
+  { id: 'egfr',     category: 'biochem',     element: <EGFRCalc /> },
   { id: 'bmi',      category: 'general',     element: <BMICalc /> },
   { id: 'paeds-wt', category: 'paeds',       element: <PaedsWeightCalc /> },
   { id: 'alvarado', category: 'general',     element: <AlvaradoCalc /> },

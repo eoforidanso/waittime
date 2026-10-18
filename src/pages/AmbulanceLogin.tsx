@@ -18,9 +18,11 @@ async function signInEMS(email: string, password: string) {
   try {
     cred = await signInWithEmailAndPassword(auth, email, password);
   } catch (err: unknown) {
-    // Auto-provision the EMS account on first use
-    if ((err as { code?: string }).code === 'auth/user-not-found' ||
-        (err as { code?: string }).code === 'auth/invalid-credential') {
+    // Auto-provision the shared EMS account on first use — only that account, never
+    // whatever email someone types (that would let anyone self-register a staff profile)
+    const code = (err as { code?: string }).code;
+    if (email.toLowerCase() === EMS_EMAIL &&
+        (code === 'auth/user-not-found' || code === 'auth/invalid-credential')) {
       cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: 'EMS Dispatch' });
       const profileDoc = doc(db, 'staff', cred.user.uid);

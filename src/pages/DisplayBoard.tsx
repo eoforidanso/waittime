@@ -28,9 +28,15 @@ export default function DisplayBoard() {
     const newTicket = nowServing.find(t => t.id === newIds[0]);
     if (!newTicket) return;
     setFlash(newTicket.id);
+  }, [nowServing.map(t => t.id).join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Clear the flash 3s after it was set. Kept separate so a later serving-list change
+  // can't cancel the timer and leave a card flashing forever.
+  useEffect(() => {
+    if (!flash) return;
     const timer = setTimeout(() => setFlash(null), 3000);
     return () => clearTimeout(timer);
-  }, [nowServing.map(t => t.id).join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [flash]);
 
   // Auto-speak only when flash is set (i.e. a new ticket just arrived)
   useEffect(() => {

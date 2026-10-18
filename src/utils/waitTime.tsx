@@ -3,8 +3,10 @@ import { useState, useEffect, useRef } from 'react';
 /** Format a duration in minutes to "Xh Ym" or "Ym" */
 export function formatWaitTime(minutes: number): string {
   if (minutes < 1) return '<1m';
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
+  // Round first so 119.7 shows "2h 0m", not "1h 60m"
+  const total = Math.round(minutes);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
 }
