@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, lazy, Suspense, useRef, Component, type ReactNode, type ErrorInfo } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { QueueProvider } from './context/QueueContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { FeatureFlagsProvider, useFeatureFlags } from './context/FeatureFlagsContext';
@@ -8,7 +8,7 @@ import SplashScreen from './components/SplashScreen';
 
 /** Catches render errors in any child page so the sidebar stays visible */
 class PageErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
-  state = { error: null };
+  state: { error: Error | null } = { error: null };
   static getDerivedStateFromError(error: Error) { return { error }; }
   componentDidCatch(_err: Error, _info: ErrorInfo) {}
   render() {
@@ -95,6 +95,9 @@ function MessageNotifier() {
 
   useEffect(() => {
     if (!user) return;
+    // Fresh baseline per signed-in user so a re-login doesn't toast every old message
+    isInitialized.current = false;
+    seenTsRef.current = {};
     const unsub = onSnapshot(collection(db, 'staffChats'), snap => {
       if (!isInitialized.current) {
         snap.docs.forEach(d => { seenTsRef.current[d.id] = d.data().lastTimestamp ?? 0; });

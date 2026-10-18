@@ -1078,6 +1078,11 @@ export function QueueProvider({ children, auditUser = null }: { children: ReactN
   const [state, dispatch] = useReducer(queueReducer, undefined, loadState);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRemoteUpdate = useRef(false);
+  // Don't push to Firestore until we've heard back from it once — otherwise a fresh
+  // device (seed data) or a stale tab would overwrite the shared hospital state on load.
+  const hasSyncedRef = useRef(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   // Keep auditUser in a ref so callbacks don't re-create when user changes
   const auditUserRef = useRef<AuditUser>(auditUser);
   useEffect(() => { auditUserRef.current = auditUser; }, [auditUser]);
@@ -1086,6 +1091,7 @@ export function QueueProvider({ children, auditUser = null }: { children: ReactN
   useEffect(() => {
     saveStateLocal(state);
     if (isRemoteUpdate.current) { isRemoteUpdate.current = false; return; }
+    if (!hasSyncedRef.current) return;
     // Debounce Firestore writes (300 ms) to avoid hammering on rapid actions
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
@@ -1096,10 +1102,19 @@ export function QueueProvider({ children, auditUser = null }: { children: ReactN
 
   // ── Real-time listener: sync state from Firestore to all open tabs/devices ──
   useEffect(() => {
+    const pushLocal = () => {
+      setDoc(doc(db, FS_DOC), { state: JSON.stringify(stateRef.current), version: STATE_VERSION })
+        .catch(() => { /* offline — localStorage still has it */ });
+    };
     const unsub = onSnapshot(doc(db, FS_DOC), (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-      if (!data?.state || data.version !== STATE_VERSION) return;
+      const firstSnapshot = !hasSyncedRef.current;
+      hasSyncedRef.current = true;
+      const data = snap.exists() ? snap.data() : undefined;
+      if (!data?.state || data.version !== STATE_VERSION) {
+        // No usable remote state yet — seed it from this client
+        if (firstSnapshot) pushLocal();
+        return;
+      }
       try {
         const parsed = JSON.parse(data.state) as QueueState;
         parsed.tickets = parsed.tickets.map(t => ({
@@ -1132,10 +1147,11 @@ export function QueueProvider({ children, auditUser = null }: { children: ReactN
             ),
           }));
         }
+        if (saveTimerRef.current) { clearTimeout(saveTimerRef.current); saveTimerRef.current = null; }
         isRemoteUpdate.current = true;
         dispatch({ type: 'SYNC_STATE', payload: parsed });
       } catch { /* corrupt remote data – ignore */ }
-    }, () => { /* offline – stay on local state */ });
+    }, () => { /* offline – stay on local state */ hasSyncedRef.current = true; });
     return unsub;
   }, []);
 

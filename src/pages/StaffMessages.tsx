@@ -193,13 +193,14 @@ export default function StaffMessages() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Mark active chat as read
+  // Mark active chat as read — on open, and again whenever a new message lands in it
+  const activeLastTs = chatMeta[activeChatId]?.lastTimestamp ?? 0;
   useEffect(() => {
     if (!user || !activeChatId) return;
-    const now = Date.now();
+    const now = Math.max(Date.now(), activeLastTs);
     setDoc(doc(db, 'staffChatLastRead', user.uid), { [activeChatId]: now }, { merge: true }).catch(() => {});
     setLastRead(prev => ({ ...prev, [activeChatId]: now }));
-  }, [user, activeChatId]);
+  }, [user, activeChatId, activeLastTs]);
 
   // Handle text input + typing indicator
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

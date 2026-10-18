@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import StaffLogin from '../pages/StaffLogin';
 
 export default function StaffGuard({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, staffProfile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -13,7 +13,9 @@ export default function StaffGuard({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!user) {
+  // A Firebase session alone isn't enough: it must belong to a staff profile, and the
+  // shared EMS account is limited to the /ambulance routes.
+  if (!user || !staffProfile || staffProfile.role === 'ems') {
     return <StaffLogin onLogin={() => {}} />;
   }
 
